@@ -1,0 +1,3 @@
+parameters:
+	backgroundQueue:
+		dataGridExport: [@ADT\Datagrid\Model\Service\DataGridService, export]

@@ -7,13 +7,13 @@ namespace ADT\Datagrid\Component;
 use ADT\BackgroundQueue\BackgroundQueue;
 use ADT\DoctrineComponents\QueryObject;
 use ADT\QueryObjectDataSource\IQueryObjectDataSourceFactory;
-use App\Model\Database\EntityManager;
 use App\Model\Query\QueryObjectFactory;
-use App\Model\Security\SecurityUser;
-use App\Model\Service\DeleteService;
-use App\Modules\BasePresenter;
+use ADT\Datagrid\Model\Security\ISecurityUser;
+use ADT\Datagrid\Model\Service\DeleteService;
+use Nette\Application\UI\Presenter;
 use Closure;
 use Contributte\Translation\Translator;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\NoResultException;
 use Kdyby\Autowired\Attributes\Autowire;
@@ -24,7 +24,6 @@ use Nette\Application\BadRequestException;
 use Nette\Application\UI\Control;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Bridges\ApplicationLatte\Template;
-use Nette\DI\Attributes\Inject;
 use Nette\DI\Container;
 use ReflectionException;
 use Ublaboo\DataGrid\Column\Action\Confirmation\StringConfirmation;
@@ -32,7 +31,7 @@ use Ublaboo\DataGrid\Exception\DataGridException;
 
 /**
  * @property-read DataGrid $grid
- * @property-read BasePresenter $presenter
+ * @property-read Presenter $presenter
  */
 abstract class BaseGrid extends Control
 {
@@ -46,16 +45,14 @@ abstract class BaseGrid extends Control
 	protected IQueryObjectDataSourceFactory $queryObjectDataSource;
 
 	#[Autowire]
-	protected SecurityUser $securityUser;
-
-	#[Autowire]
-	protected EntityManager $em;
-
-	#[Autowire]
 	protected DeleteService $deleteService;
 
 	#[Autowire]
 	protected BackgroundQueue $backgroundQueue;
+
+	protected EntityManagerInterface $em;
+
+	protected ISecurityUser $securityUser;
 
 	/** @var callable */
 	protected $onDelete;
@@ -73,6 +70,7 @@ abstract class BaseGrid extends Control
 		$grid = new DataGrid(static::$templateFile);
 		$grid->setTranslator($this->translator);
 		$grid->setBackgroundQueue($this->backgroundQueue);
+		$this->securityUser = $this->getPresenter()->getUser();
 
 		$grid->setOuterFilterRendering();
 
@@ -286,7 +284,7 @@ abstract class BaseGrid extends Control
 		return $this->autowirePropertiesLocator;
 	}
 
-	public function getEntityManager(): EntityManager
+	public function getEntityManager(): EntityManagerInterface
 	{
 		return $this->em;
 	}
@@ -300,5 +298,10 @@ abstract class BaseGrid extends Control
 	public function setProject(string $project): void
 	{
 		$this->project = $project;
+	}
+
+	public function setEntityManager(EntityManagerInterface $em): void
+	{
+		$this->em = $em;
 	}
 }

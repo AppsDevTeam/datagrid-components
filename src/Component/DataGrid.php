@@ -6,12 +6,11 @@ namespace ADT\Datagrid\Component;
 
 use ADT\BackgroundQueue\BackgroundQueue;
 use ADT\DoctrineComponents\QueryObjectByMode;
+use ADT\DoctrineComponents\QueryObjectInterface;
 use ADT\QueryObjectDataSource\QueryObjectDataSource;
 use App\Components\Forms\Base\FormRenderer;
-use App\Model\Query\BaseQuery;
-use App\Model\Service\DataGridService;
-use App\Model\Utils;
-use Kdyby\Autowired\Attributes\Autowire;
+use ADT\Datagrid\Model\Service\DataGridService;
+use ADT\Datagrid\Model\Utils;
 use Nette;
 use Nette\Application\UI\Form;
 use Nette\Utils\DateTime;
@@ -375,7 +374,7 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 		}
 
 		$this->addFilterText('advancedSearch', '', [])
-			->setCondition(function (BaseQuery $query, $value) {
+			->setCondition(function (QueryObjectInterface $query, $value) {
 
 				if ($value) {
 					$advanceSearch = Json::decode($value, Json::FORCE_ARRAY);

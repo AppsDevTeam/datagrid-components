@@ -4,7 +4,12 @@
   "license": ["MIT"],
   "require": {
     "php": ">=8.2",
-    "ublaboo/datagrid": "^6.9"
+    "ublaboo/datagrid": "^6.9",
+    "adt/query-object-data-source": "^2.5",
+    "contributte/translation": "^2.0",
+    "nettrine/orm": "^0.8.4",
+    "kdyby/autowired": "^3.0",
+    "adt/background-queue-nette": "^2.6"
   },
   "autoload": {
     "psr-4": {
