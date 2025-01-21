@@ -1,0 +1,14 @@
+{
+  "name": "adt/datagrid",
+  "type": "library",
+  "license": ["MIT"],
+  "require": {
+    "php": ">=8.2",
+    "ublaboo/datagrid": "^6.9"
+  },
+  "autoload": {
+    "psr-4": {
+      "ADT\\Datagrid\\": "src/"
+    }
+  }
+}

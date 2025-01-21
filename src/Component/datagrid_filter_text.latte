@@ -1,0 +1,13 @@
+{**
+ * @param Filter                         $filter
+ * @param Nette\Forms\Controls\TextInput $input
+ *}
+
+{if $outer}
+	<div class="form-group-filter mr-2 mb-3">
+		{label $input, class => 'filter-range-delimiter control-label text-left' /}
+		{input $input class => 'form-control text'}
+	</div>
+{else}
+	{input $input}
+{/if}
