@@ -1,0 +1,49 @@
+<div class="d-flex justify-content-end align-items-end w-100">
+	<div n:if="isset($filters['advancedSearch'])" data-adt-dashboard-filter>
+		<div n:class="btn-group, dropdown-filter, ($selectedGridFilter || $temporaryGridFilter) ? selected">
+			<a href="{plink editGridFilter! 'editId' => $selectedGridFilter['id'] ?? null, gridFilterClass => $gridClass, columns => $gridFilterColumns}" class="btn">
+				<div class="dropdown-selected-name-wrapper">
+					<i class="fa-solid fa-filter"></i>
+					<span class="dropdown-selected-name">{$temporaryGridFilter ? 'Aktivní filtr' : ($selectedGridFilter ? $selectedGridFilter['name'] : '')}</span>{* TODO translate *}
+				</div>
+			</a>
+			<a href="{plink editGridFilter! gridFilterClass => $gridClass, columns => $gridFilterColumns}" class="btn">
+				<span>
+					<i class="fa-solid fa-filter"></i>
+				</span>
+			</a>
+			<a n:href="resetGridFilter!" class="btn disable-filter-button">
+				<i class="fa-solid fa-xmark"></i>
+			</a>
+
+			<button type="button" class="btn dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+			</button>
+
+			<ul class="dropdown-menu dropdown-menu-end">
+				{foreach $gridFilters as $gridFilter}
+					<li n:class="dropdown-item, $selectedGridFilter && $selectedGridFilter['id'] === $gridFilter->getId() ? 'selected'">
+						<a n:href="this selectedGridFilter => $gridFilter->getId()">
+							{$gridFilter->getName()}
+							<a class="btn-edit" href="{plink editGridFilter! 'editId' => $gridFilter->getId(), columns => $gridFilterColumns}">
+								<i class="fa-solid fa-pencil"></i>
+							</a>
+						</a>
+
+					</li>
+				{/foreach}
+				<li class="dropdown-item new-filter" id="add-button">
+					<a href="{plink editGridFilter! gridFilterClass => $gridClass, columns => $gridFilterColumns}">
+						<i class="fa-solid fa-plus"></i>
+						Přidat nový filtr {* TODO překlady *}
+					</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<span class="datagrid-exports" n:if="$exports" n:snippet="exports" n:block="exports">
+		{foreach $exports as $export}
+			{$export->setClass('btn noajax')->render()}
+		{/foreach}
+	</span>
+</div>

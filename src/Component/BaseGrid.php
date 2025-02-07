@@ -50,8 +50,6 @@ abstract class BaseGrid extends Control
 	#[Autowire]
 	protected BackgroundQueue $backgroundQueue;
 
-	protected EntityManagerInterface $em;
-
 	protected ISecurityUser $securityUser;
 
 	/** @var callable */
@@ -67,7 +65,7 @@ abstract class BaseGrid extends Control
 
 	final protected function createComponentGrid(): DataGrid
 	{
-		$grid = new DataGrid(static::$templateFile);
+		$grid = $this->createGridInstance();
 		$grid->setTranslator($this->translator);
 		$grid->setBackgroundQueue($this->backgroundQueue);
 		$this->securityUser = $this->getPresenter()->getUser();
@@ -95,6 +93,11 @@ abstract class BaseGrid extends Control
 		}
 
 		return $grid;
+	}
+
+	protected function createGridInstance(): DataGrid
+	{
+		return new DataGrid(static::$templateFile);
 	}
 
 	public function getYesNoOptions(): array
@@ -284,11 +287,6 @@ abstract class BaseGrid extends Control
 		return $this->autowirePropertiesLocator;
 	}
 
-	public function getEntityManager(): EntityManagerInterface
-	{
-		return $this->em;
-	}
-
 
 	public function translateArray(array $array): array
 	{
@@ -300,8 +298,8 @@ abstract class BaseGrid extends Control
 		$this->project = $project;
 	}
 
-	public function setEntityManager(EntityManagerInterface $em): void
+	public function setBackgroundQueue(BackgroundQueue $backgroundQueue): void
 	{
-		$this->em = $em;
+		$this->backgroundQueue = $backgroundQueue;
 	}
 }

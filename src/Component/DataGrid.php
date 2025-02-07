@@ -285,33 +285,6 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 		}
 	}
 
-	public function handleSortRows(): void
-	{
-		$itemId = $this->getParent()->getParameter('item_id');
-		$nextId = $this->getParent()->getParameter('next_id');
-		$previousId = $this->getParent()->getParameter('prev_id');
-		$item = $this->getParent()->getQueryObject()->byId($itemId)->fetchOne();
-
-		if ($previousId) {
-			$previousItem = $this->getParent()->getQueryObject()->byId($previousId)->fetchOne();
-			$newPosition = $previousItem->getPosition() + 1;
-		}
-		else if ($nextId) {
-			$nextItem = $this->getParent()->getQueryObject()->byId($nextId)->fetchOne();
-			$newPosition = $nextItem->getPosition() - 1;
-		}
-		else {
-			$newPosition = 0;
-		}
-
-		if ($newPosition < 0) {
-			$newPosition = 0;
-		}
-
-		$item->setPosition($newPosition);
-		$this->getParent()->getEntityManager()->flush();
-	}
-
 	/**
 	 * Add filter for ajax entity select
 	 * @param string        $key

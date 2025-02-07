@@ -59,6 +59,8 @@
 							<i class="fa-solid fa-magnifying-glass search-icon"></i>
 						{/ifset}
 
+						{control }
+
 						<div class="grid-group-actions">
 							<button class="btn btn-primary collapse-filters {if !$filter_active}collapsed{/if}" type="button" data-bs-toggle="collapse" data-bs-target=".grid-filters-{$control->getParent()->getName()}" aria-expanded="{$filter_active ? 'true' : 'false'}">
 								<span class="collapsed-text">

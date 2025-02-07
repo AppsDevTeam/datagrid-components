@@ -3,13 +3,13 @@
   "type": "library",
   "license": ["MIT"],
   "require": {
-    "php": ">=8.2",
+    "php": ">=8.4",
     "ublaboo/datagrid": "^6.9",
     "adt/query-object-data-source": ">=2.5",
     "contributte/translation": "^2.0",
-    "nettrine/orm": "^0.8.4",
+    "nettrine/orm": "^0.9",
     "kdyby/autowired": "^3.0",
-    "adt/background-queue-nette": "^2.6"
+    "adt/background-queue-nette": "^3.0"
   },
   "autoload": {
     "psr-4": {
