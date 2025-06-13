@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace ADT\Datagrid\Component;
 
 use ADT\BackgroundQueue\BackgroundQueue;
+use ADT\Datagrid\Model\Export\Excel\ExportExcel;
 use ADT\DoctrineComponents\QueryObjectByMode;
 use ADT\DoctrineComponents\QueryObjectInterface;
 use ADT\QueryObjectDataSource\QueryObjectDataSource;
-use App\Components\Forms\Base\FormRenderer;
 use ADT\Datagrid\Model\Service\DataGridService;
 use ADT\Datagrid\Model\Utils;
+use App\Model\Queries\Base\BaseQuery;
+use App\Model\Queries\Factories\GridFilterQueryFactory;
+use App\UI\Portal\Components\Forms\Base\FormRenderer;
 use Nette;
 use Nette\Application\UI\Form;
 use Nette\Utils\DateTime;
@@ -22,16 +25,22 @@ use Ublaboo\DataGrid\Export\ExportCsv;
 use Ublaboo\DataGrid\Filter\Filter;
 use Ublaboo\DataGrid\Filter\FilterMultiSelect;
 use Ublaboo\DataGrid\Filter\FilterSelect;
+use Ublaboo\DataGrid\Row;
 use Ublaboo\DataGrid\Utils\ArraysHelper;
 
 class DataGrid extends \Ublaboo\DataGrid\DataGrid
 {
+	const string SELECTED_GRID_FILTER_SESSION_KEY = 'selectedGridFilter';
+	const string TEMPORARY_GRID_FILTER_SESSION_KEY = 'temporaryGridFilter';
+
 	public const TEMPLATE_DEFAULT = 'DataGrid.latte';
 	public const TEMPLATE_PRETTY = 'DataGridPretty.latte';
 
 	public const ACTION_DROPDOWN_ITEM = 'dropdown-item';
 
 	protected BackgroundQueue $backgroundQueue;
+
+	protected GridFilterQueryFactory $gridFilterQueryFactory;
 
 	public $strictSessionFilterValues = false;
 
@@ -104,12 +113,36 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 
 	public function render(): void
 	{
+		$gridClass = get_class($this->getParent());
+
+		if ($this->getParameter(self::SELECTED_GRID_FILTER_SESSION_KEY)) {
+			if (
+				$selectedGridFilter = $this->gridFilterQueryFactory
+					->create()
+					->byId($this->getParameter(self::SELECTED_GRID_FILTER_SESSION_KEY))
+					->fetchOneOrNull()
+			) {
+				$this->saveSessionData(self::SELECTED_GRID_FILTER_SESSION_KEY, ['id' => $selectedGridFilter->getId(), 'name' => $selectedGridFilter->getName()]);
+				$this->setFilter(['advancedSearch' => Json::encode($selectedGridFilter->getValue())]);
+				$this->deleteSessionData(self::TEMPORARY_GRID_FILTER_SESSION_KEY);
+			}
+		}
+
+		if ($this->getSessionData(self::TEMPORARY_GRID_FILTER_SESSION_KEY)) {
+			$this->deleteSessionData(self::SELECTED_GRID_FILTER_SESSION_KEY);
+		}
+
 		$this->template->actionsToDropdown = $this->actionsToDropdown;
 		$this->template->translator = $this->translator;
 		$this->template->gridClasses = $this->classes;
 		$this->template->gridHtmlDataAttributes = $this->htmlDataAttributes;
 		$this->template->showTableFoot = $this->showTableFoot;
 		$this->template->toolbarButons = $this->toolbarButtons;
+		$this->template->gridFilterColumns = Json::encode($this->getGridFilterFields());
+		$this->template->gridClass = $gridClass;
+		$this->template->selectedGridFilter = $this->getSessionData(self::SELECTED_GRID_FILTER_SESSION_KEY);
+		$this->template->temporaryGridFilter = $this->getSessionData(self::TEMPORARY_GRID_FILTER_SESSION_KEY);
+		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid($gridClass)->fetch();
 
 		parent::render();
 	}
@@ -147,7 +180,54 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 			};
 		}
 
-		parent::handleExport($id);
+		if (!isset($this->exports[$id])) {
+			throw new Nette\Application\ForbiddenRequestException;
+		}
+
+		if ($this->columnsExportOrder !== []) {
+			$this->setColumnsOrder($this->columnsExportOrder);
+		}
+
+		$export = $this->exports[$id];
+
+		/**
+		 * Invoke possible events
+		 */
+		$this->onExport($this);
+
+		if ($export->isFiltered()) {
+			$sort = $this->sort;
+			$filter = $this->assembleFilters();
+		} else {
+			$sort = [$this->primaryKey => 'ASC'];
+			$filter = [];
+		}
+
+		if ($this->dataModel === null) {
+			throw new DataGridException('You have to set a data source first.');
+		}
+
+		$rows = [];
+
+		$items = $this->dataModel->filterData(
+			null,
+			$this->createSorting($sort, $this->sortCallback),
+			$filter
+		);
+
+		foreach ($items as $item) {
+			$rows[] = new Row($this, $item, $this->getPrimaryKey());
+		}
+
+		if ($export instanceof ExportCsv || $export instanceof ExportExcel) {
+			$export->invoke($rows);
+		} else {
+			$export->invoke($items);
+		}
+
+		if ($export->isAjax()) {
+			$this->reload();
+		}
 	}
 
 	/**
@@ -255,6 +335,15 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 			->setIcon('file-export');
 	}
 
+	public function addExportExcel(
+		string $text,
+		string $fileName,
+		bool   $filtered = true
+	): ExportExcel
+	{
+		return parent::addExportExcel('', $fileName, $filtered)
+			->setIcon('file-export');
+	}
 
 	public function isFilterActive(): bool
 	{
@@ -285,6 +374,14 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 		}
 	}
 
+	public function handleResetGridFilter(): void
+	{
+		$this->deleteSessionData(self::SELECTED_GRID_FILTER_SESSION_KEY);
+		$this->deleteSessionData(self::TEMPORARY_GRID_FILTER_SESSION_KEY);
+		$this->handleResetFilter();
+		$this->redirect('this');
+	}
+
 	/**
 	 * Add filter for ajax entity select
 	 * @param string        $key
@@ -311,8 +408,7 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 		return $this->filters[$key] = $filterAjaxSelect;
 	}
 
-
-	public function addAdvancedFilteredSearch(array $fields = [], bool $includeAllColumns = true): void
+	public function getGridFilterFields(array $fields = [], bool $includeAllColumns = true): array
 	{
 		if ($includeAllColumns) {
 			$fields = [
@@ -339,22 +435,30 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 
 					if ($column instanceof ColumnDateTime) {
 						$field['type'] = 'date';
+					} elseif ($column instanceof ColumnNumber) {
+						$field['type'] = 'number';
 					}
 				}
 
-				$field['label'] = $column->getName();
+				$field['label'] = $this->translator->translate($column->getName());
 			}
 		}
 
-		$this->addFilterText('advancedSearch', '', [])
-			->setCondition(function (QueryObjectInterface $query, $value) {
+		return $fields;
+	}
 
+	public function addAdvancedFilteredSearch(array $fields = [], bool $includeAllColumns = true): void
+	{
+		$fields = $this->getGridFilterFields($fields, $includeAllColumns);
+
+		$this->addFilterText('advancedSearch', '', [])
+			->setCondition(function (BaseQuery $query, $value) {
 				if ($value) {
 					$advanceSearch = Json::decode($value, Json::FORCE_ARRAY);
 
 					$seenValues = [];
 					foreach ($advanceSearch as $key => $item) {
-						$fieldValue = $item['field']['value'];
+						$fieldValue = $item['value'];
 
 						if (in_array($fieldValue, $seenValues)) {
 							// Odstraníme duplicity
@@ -367,50 +471,42 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 
 					foreach ($advanceSearch as $searchFilter) {
 						$operatorMap = [
-							'eq' => QueryObjectByMode::STRICT,
-							'ne' => QueryObjectByMode::NOT_EQUAL,
+							'eq' => QueryObjectByMode::EQUALS,
+							'ne' => QueryObjectByMode::NOT_EQUALS,
 							'sw' => QueryObjectByMode::STARTS_WITH,
 							'ct' => QueryObjectByMode::CONTAINS,
 							'nct' => QueryObjectByMode::NOT_CONTAINS,
 							'fw' => QueryObjectByMode::ENDS_WITH,
 							'in' => QueryObjectByMode::IN_ARRAY,
-							'null' => QueryObjectByMode::IS_EMPTY,
-							'nn' => QueryObjectByMode::IS_NOT_EMPTY,
-							'gt' => QueryObjectByMode::GREATER_OR_EQUAL,
-							'lt' => QueryObjectByMode::LESS_OR_EQUAL,
+							'null' => QueryObjectByMode::IS_NULL,
+							'nn' => QueryObjectByMode::IS_NOT_NULL,
+							'gt' => QueryObjectByMode::GREATER,
+							'lt' => QueryObjectByMode::LESS,
 							'bw' => QueryObjectByMode::BETWEEN,
 							'nbw' => QueryObjectByMode::NOT_BETWEEN,
 						];
 
-						if (!empty($searchFilter['value']['value2'])) {
+						if (!empty($searchFilter['value2'])) {
 							$value = [
-								$searchFilter['value']['value'],
-								$searchFilter['value']['value2']
+								\App\Model\Utils::getDateTimeFromArray($searchFilter['value']) ?: $searchFilter['value'],
+								Utils::getDateTimeFromArray($searchFilter['value2']) ?: $searchFilter['value2'],
 							];
-
-							$value = array_map(function ($_value) {
-								if ($date = \DateTimeImmutable::createFromFormat('m/d/Y', $_value)) {
-									$_value = $date;
-								}
-								return $_value;
-							}, $value);
 						} else {
-							$value = $searchFilter['value']['value'];
-							if ($date = \DateTimeImmutable::createFromFormat('m/d/Y', $value)) {
-								$value = $date;
-							} elseif ($operatorMap[$searchFilter['operator']['value']] === QueryObjectByMode::IN_ARRAY) {
-								$delimiter = $searchFilter['value']['delimiter'] ?? ',';
+							$value = Utils::getDateTimeFromArray($searchFilter['value']) ?: $searchFilter['value'];
+							if ($operatorMap[$searchFilter['operator']] === QueryObjectByMode::IN_ARRAY && !is_array($value)) {
+								$delimiter = $searchFilter['delimiter'] ?? ',';
 								$value = explode($delimiter, $value);
 							}
 						}
 
-						if (Utils::realEmpty($value)
-							&& !in_array($operatorMap[$searchFilter['operator']['value']], [QueryObjectByMode::IS_EMPTY, QueryObjectByMode::IS_NOT_EMPTY])
+						if (
+							Utils::realEmpty($value)
+							&& !in_array($operatorMap[$searchFilter['operator']], [QueryObjectByMode::IS_NULL, QueryObjectByMode::IS_NOT_NULL])
 						) {
 							continue;
 						}
 
-						$label = $searchFilter['field']['value'];
+						$label = $searchFilter['label'];
 
 						try {
 							$column = array_keys($this->getFilter($label)->getCondition());
@@ -421,7 +517,7 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 						$query->by(
 							(!empty($column) ? $column : $label),
 							$value,
-							$operatorMap[$searchFilter['operator']['value']] ?? QueryObjectByMode::STRICT
+							$operatorMap[$searchFilter['operator']] ?? QueryObjectByMode::EQUALS
 						);
 					}
 				}
@@ -432,6 +528,12 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 	public function setBackgroundQueue(BackgroundQueue $backgroundQueue): self
 	{
 		$this->backgroundQueue = $backgroundQueue;
+		return $this;
+	}
+
+	public function setGridFilterQuery(GridFilterQueryFactory $queryFactory): self
+	{
+		$this->gridFilterQueryFactory = $queryFactory;
 		return $this;
 	}
 }
