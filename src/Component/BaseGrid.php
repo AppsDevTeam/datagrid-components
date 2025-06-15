@@ -15,6 +15,7 @@ use Doctrine\ORM\NoResultException;
 use Exception;
 use Nette\Application\AbortException;
 use Nette\Application\BadRequestException;
+use Nette\Application\UI\Control;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Localization\Translator;
 use Nette\Security\User;
@@ -28,9 +29,8 @@ use Ublaboo\DataGrid\Exception\DataGridException;
  * @property-read DataGrid $grid
  * @method BasePresenter getPresenter()
  */
-abstract class BaseGrid
+abstract class BaseGrid extends Control
 {
-	abstract protected function initGrid(DataGrid $grid): void;
 	abstract protected function getTranslator(): Translator;
 	abstract protected function getGridFilterQueryFactory();
 	abstract protected function getQueryObjectDataSourceFactory(): IQueryObjectDataSourceFactory;
