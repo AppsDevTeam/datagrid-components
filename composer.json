@@ -4,13 +4,16 @@
   "license": ["MIT"],
   "require": {
     "php": ">=8.4",
-    "ublaboo/datagrid": "^6.9",
+    "ublaboo/datagrid": "^7.0",
     "adt/query-object-data-source": ">=2.5",
     "contributte/translation": "^2.0",
-    "nettrine/orm": "^0.9",
     "kdyby/autowired": "^3.0",
     "adt/background-queue-nette": "^3.0",
-    "mk-j/php_xlsxwriter": "^0.39.0"
+    "mk-j/php_xlsxwriter": "^0.39.0",
+    "adt/doctrine-components": "^3.0",
+    "nette/mail": "^4.0",
+    "nette/security": "^3.2",
+    "adt/nette-application-components": "^1.0"
   },
   "autoload": {
     "psr-4": {

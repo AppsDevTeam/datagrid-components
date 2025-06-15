@@ -2,9 +2,8 @@
 
 namespace ADT\Datagrid\Model\Service;
 
-use App\Model\Database\EntityManager;
+use ADT\DoctrineComponents\EntityManager;
 use App\Model\Entity\File;
-use App\Model\Entity\Item;
 use App\Model\Mailer\Mailer;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -19,7 +18,7 @@ class DataGridService
 
 	public function __construct(
 		private readonly Mailer $mailer,
-		private readonly EntityManager $entityManager,
+		private readonly EntityManager $em,
 	) {}
 
 	/**
@@ -42,7 +41,7 @@ class DataGridService
 		$file = fopen('php://memory','w');
 
 		$items = SimpleBatchIteratorAggregate::fromQuery(
-			$this->entityManager->getRepository($entityClass)
+			$this->em->getRepository($entityClass)
 				->createQueryBuilder('e')
 				->where('e.id IN (:ids)')
 				->setParameter('ids', $ids)
@@ -50,7 +49,6 @@ class DataGridService
 			1000
 		);
 
-		/** @var Item $item */
 		foreach ($items as $item) {
 			$row = [];
 
@@ -73,12 +71,12 @@ class DataGridService
 		rewind($file);
 		$fileName = mb_strtolower(substr($entityClass, strrpos($entityClass, '\\') + 1));
 		$exportedFile = (new File())
-			->setExpiresAt((new DateTimeImmutable())->modify('+72 hours'))
+			->setExpiresAt(new DateTimeImmutable()->modify('+72 hours'))
 			->setTemporaryContent(stream_get_contents($file), $fileName . '.csv');
 		fclose($file);
 
-		$this->entityManager->persist($exportedFile);
-		$this->entityManager->flush();
+		$this->em->persist($exportedFile);
+		$this->em->flush();
 
 		$this->sendEmail($userMail, $downloadLink, $exportedFile);
 	}
