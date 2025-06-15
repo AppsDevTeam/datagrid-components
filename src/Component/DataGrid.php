@@ -42,7 +42,7 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 
 	protected GridFilterQueryFactory $gridFilterQueryFactory;
 
-	public $strictSessionFilterValues = false;
+	public bool $strictSessionFilterValues = false;
 
 	/** @var string */
 	protected string $templateType;
