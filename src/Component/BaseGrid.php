@@ -31,6 +31,7 @@ use Ublaboo\DataGrid\Exception\DataGridException;
  */
 abstract class BaseGrid extends Control
 {
+	abstract protected function getDataGridClass(): string;
 	abstract protected function getTranslator(): Translator;
 	abstract protected function getGridFilterQueryFactory();
 	abstract protected function getQueryObjectDataSourceFactory(): IQueryObjectDataSourceFactory;
@@ -49,7 +50,7 @@ abstract class BaseGrid extends Control
 	 */
 	final protected function createComponentGrid(): DataGrid
 	{
-		$grid = new DataGrid(static::$templateFile);
+		$grid = new ($this->getDataGridClass())(static::$templateFile);
 		$grid->setTranslator($this->getTranslator());
 		$grid->setGridFilterQuery($this->getGridFilterQueryFactory());
 
