@@ -6,8 +6,8 @@ namespace ADT\Datagrid\Component;
 
 use ADT\BackgroundQueue\BackgroundQueue;
 use ADT\Datagrid\Model\Export\Excel\ExportExcel;
-use ADT\DoctrineComponents\QueryObjectByMode;
-use ADT\DoctrineComponents\QueryObjectInterface;
+use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
+use ADT\DoctrineComponents\QueryObject\QueryObjectInterface;
 use ADT\QueryObjectDataSource\QueryObjectDataSource;
 use ADT\Datagrid\Model\Service\DataGridService;
 use ADT\Datagrid\Model\Utils;
@@ -18,15 +18,15 @@ use Nette;
 use Nette\Application\UI\Form;
 use Nette\Utils\DateTime;
 use Nette\Utils\Json;
-use Ublaboo\DataGrid\Column\ColumnDateTime;
-use Ublaboo\DataGrid\Column\ColumnNumber;
-use Ublaboo\DataGrid\Exception\DataGridException;
-use Ublaboo\DataGrid\Export\ExportCsv;
-use Ublaboo\DataGrid\Filter\Filter;
-use Ublaboo\DataGrid\Filter\FilterMultiSelect;
-use Ublaboo\DataGrid\Filter\FilterSelect;
-use Ublaboo\DataGrid\Row;
-use Ublaboo\DataGrid\Utils\ArraysHelper;
+use Contributte\DataGrid\Column\ColumnDateTime;
+use Contributte\DataGrid\Column\ColumnNumber;
+use Contributte\DataGrid\Exception\DataGridException;
+use Contributte\DataGrid\Export\ExportCsv;
+use Contributte\DataGrid\Filter\Filter;
+use Contributte\DataGrid\Filter\FilterMultiSelect;
+use Contributte\DataGrid\Filter\FilterSelect;
+use Contributte\DataGrid\Row;
+use Contributte\DataGrid\Utils\ArraysHelper;
 
 class DataGrid extends \Ublaboo\DataGrid\DataGrid
 {
@@ -36,7 +36,9 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 	public const TEMPLATE_DEFAULT = 'DataGrid.latte';
 	public const TEMPLATE_PRETTY = 'DataGridPretty.latte';
 
-	public const ACTION_DROPDOWN_ITEM = 'dropdown-item';
+	public const ACTION_NOT_DROPDOWN_ITEM = [
+		'ajax datagrid-edit'
+	];
 
 	protected BackgroundQueue $backgroundQueue;
 
