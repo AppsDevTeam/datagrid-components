@@ -4,7 +4,7 @@
   "license": ["MIT"],
   "require": {
     "php": ">=8.4",
-    "ublaboo/datagrid": "^7.0",
+    "ublaboo/datagrid": "dev-feature/excel-export",
     "adt/query-object-data-source": "^3.0",
     "contributte/translation": "^2.0",
     "kdyby/autowired": "^3.0",
@@ -19,5 +19,11 @@
     "psr-4": {
       "ADT\\Datagrid\\": "src/"
     }
-  }
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/conflictboy/datagrid"
+    }
+  ]
 }
