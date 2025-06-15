@@ -5,7 +5,7 @@
   "require": {
     "php": ">=8.4",
     "ublaboo/datagrid": "^7.0",
-    "adt/query-object-data-source": ">=2.5",
+    "adt/query-object-data-source": "^3.0",
     "contributte/translation": "^2.0",
     "kdyby/autowired": "^3.0",
     "adt/background-queue-nette": "^3.0",
