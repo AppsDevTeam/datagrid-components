@@ -29,6 +29,7 @@ use Contributte\Datagrid\Filter\FilterMultiSelect;
 use Contributte\Datagrid\Filter\FilterSelect;
 use Contributte\Datagrid\Row;
 use Contributte\Datagrid\Utils\ArraysHelper;
+use Throwable;
 
 class DataGrid extends \Contributte\Datagrid\Datagrid
 {
@@ -515,7 +516,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 						try {
 							$column = array_keys($this->getFilter($label)->getCondition());
-						} catch (\Exception) {
+						} catch (Throwable) {
 							$column = $this->getColumn($label)->getColumn();
 						}
 
