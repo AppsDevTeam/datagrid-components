@@ -346,7 +346,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	): ExportExcel
 	{
 		$export = new ExportExcel($this, $text, $fileName, $filtered);
-		$this->addToExports($export);
+		$this->addToExports($export)->setIcon('file-export')->setText('');
 		return $export;
 	}
 
