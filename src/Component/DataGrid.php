@@ -11,24 +11,27 @@ use ADT\DoctrineComponents\QueryObject\QueryObjectInterface;
 use ADT\QueryObjectDataSource\QueryObjectDataSource;
 use ADT\Datagrid\Model\Service\DataGridService;
 use ADT\Datagrid\Model\Utils;
+use App\Model\Entities\GridFilter;
 use App\Model\Queries\Base\BaseQuery;
 use App\Model\Queries\Factories\GridFilterQueryFactory;
 use App\UI\Portal\Components\Forms\Base\FormRenderer;
+use App\UI\Portal\Components\Panels\GridFilterPanelControl\GridFilterPanelControlFactory;
+use App\UI\Portal\Components\SidePanels\SidePanelControl;
 use Nette;
 use Nette\Application\UI\Form;
 use Nette\Utils\DateTime;
 use Nette\Utils\Json;
-use Contributte\DataGrid\Column\ColumnDateTime;
-use Contributte\DataGrid\Column\ColumnNumber;
-use Contributte\DataGrid\Exception\DataGridException;
-use Contributte\DataGrid\Export\ExportCsv;
-use Contributte\DataGrid\Filter\Filter;
-use Contributte\DataGrid\Filter\FilterMultiSelect;
-use Contributte\DataGrid\Filter\FilterSelect;
-use Contributte\DataGrid\Row;
-use Contributte\DataGrid\Utils\ArraysHelper;
+use Contributte\Datagrid\Column\ColumnDateTime;
+use Contributte\Datagrid\Column\ColumnNumber;
+use Contributte\Datagrid\Exception\DataGridException;
+use Contributte\Datagrid\Export\ExportCsv;
+use Contributte\Datagrid\Filter\Filter;
+use Contributte\Datagrid\Filter\FilterMultiSelect;
+use Contributte\Datagrid\Filter\FilterSelect;
+use Contributte\Datagrid\Row;
+use Contributte\Datagrid\Utils\ArraysHelper;
 
-class DataGrid extends \Ublaboo\DataGrid\DataGrid
+class DataGrid extends \Contributte\Datagrid\Datagrid
 {
 	const string SELECTED_GRID_FILTER_SESSION_KEY = 'selectedGridFilter';
 	const string TEMPORARY_GRID_FILTER_SESSION_KEY = 'temporaryGridFilter';
@@ -537,5 +540,34 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 	{
 		$this->gridFilterQueryFactory = $queryFactory;
 		return $this;
+	}
+
+	public function handleEditGridFilter(): void
+	{
+		$this->redrawSidePanel('gridFilter');
+	}
+
+	public function createComponentGridFilterSidePanel(GridFilterPanelControlFactory $factory): SidePanelControl
+	{
+		if ($this->getParameter('columns')) {
+			$this->gridFilterParameters = Json::decode($this->getParameter('columns'), forceArrays: true);
+		}
+		if ($this->getParameter('gridFilterClass')) {
+			$this->gridFilterClass = $this->getParameter('gridFilterClass');
+		}
+
+		$gridFilter = $this->getParameter('editId')
+			? $this->gridFilterQueryFactory->create()->byId($this->getParameter('editId'))->fetchOneOrNull()
+			: (new GridFilter())
+				->setGrid($this->gridFilterClass)
+				->setCompany($this->securityUser->getIdentity()->getFilteredCompany());
+
+		$form = $this->gridFilterFormFactory->create()
+			->setEntity($gridFilter)
+			->setFilterList($this->gridFilterParameters);
+
+		return $factory->create()
+			->setEntity($gridFilter)
+			->setForm($form);
 	}
 }

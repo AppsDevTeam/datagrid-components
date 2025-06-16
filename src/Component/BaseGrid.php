@@ -10,6 +10,8 @@ use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\QueryObjectDataSource\IQueryObjectDataSourceFactory;
 use Closure;
+use Contributte\Datagrid\Column\Action\Confirmation\StringConfirmation;
+use Contributte\Datagrid\Exception\DatagridException;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\NoResultException;
 use Exception;
@@ -22,8 +24,6 @@ use Nette\Security\User;
 use ReflectionClass;
 use ReflectionException;
 use TypeError;
-use Ublaboo\DataGrid\Column\Action\Confirmation\StringConfirmation;
-use Ublaboo\DataGrid\Exception\DataGridException;
 
 /**
  * @property-read DataGrid $grid
@@ -43,13 +43,13 @@ abstract class BaseGrid extends Control
 	protected $onDelete;
 	protected static string $templateFile = DataGrid::TEMPLATE_DEFAULT;
 	protected bool $withoutIsActiveColumn = false;
-	private ?QueryObject $queryObject = null;
 
 	/**
-	 * @throws DataGridException
+	 * @throws DatagridException
 	 */
 	final protected function createComponentGrid(): DataGrid
 	{
+		/** @var DataGrid $grid */
 		$grid = new ($this->getDataGridClass())(static::$templateFile);
 		$grid->setTranslator($this->getTranslator());
 		$grid->setGridFilterQuery($this->getGridFilterQueryFactory());
@@ -83,7 +83,7 @@ abstract class BaseGrid extends Control
 		$this->addIsActive($grid);
 
 		if ($grid->isSortable()) {
-			$grid->setSortableHandler('sortRows!');
+			$grid->setSortableHandler($this->name . '-sortRows!');
 		}
 
 		if ($grid->getTemplateFile() === $grid->getOriginalTemplateFile()) {
@@ -138,7 +138,7 @@ abstract class BaseGrid extends Control
 			try {
 				$this->getPresenter()->{$methodName}($id);
 			} catch (InvalidLinkException | TypeError) {
-				$this->getPresenter()->{$methodName}($this->getQueryObject()->byId($id)->fetchOne());
+				$this->getPresenter()->{$methodName}($this->createQueryObject()->byId($id)->fetchOne());
 			}
 		} else {
 			// because of "Argument $order passed to App\Modules\SystemModule\Orders\OrdersPresenter::actionEdit() must be App\Model\Entity\Order, integer given."
@@ -146,9 +146,37 @@ abstract class BaseGrid extends Control
 			try {
 				$this->getPresenter()->redirect($this->allowEdit()->redirect, $id);
 			} catch (InvalidLinkException) {
-				$this->getPresenter()->redirect($this->allowEdit()->redirect, $this->getQueryObject()->byId($id)->fetchOne());
+				$this->getPresenter()->redirect($this->allowEdit()->redirect, $this->createQueryObject()->byId($id)->fetchOne());
 			}
 		}
+	}
+
+	/**
+	 * @throws ReflectionException
+	 */
+	public function handleSortRows(): void
+	{
+		$itemId = $this->getParameter('item_id');
+		$nextId = $this->getParameter('next_id');
+		$previousId = $this->getParameter('prev_id');
+		$item = $this->createQueryObject()->byId($itemId)->fetchOne();
+
+		if ($previousId) {
+			$previousItem = $this->createQueryObject()->byId($previousId)->fetchOne();
+			$newPosition = $previousItem->getPosition() + 1;
+		} else if ($nextId) {
+			$nextItem = $this->createQueryObject()->byId($nextId)->fetchOne();
+			$newPosition = $nextItem->getPosition() - 1;
+		} else {
+			$newPosition = 0;
+		}
+
+		if ($newPosition < 0) {
+			$newPosition = 0;
+		}
+
+		$item->setPosition($newPosition);
+		$this->getEntityManager()->flush();
 	}
 
 	/**
@@ -167,7 +195,7 @@ abstract class BaseGrid extends Control
 			$this->getPresenter()->error();
 		}
 
-		if (!$entity = $this->getQueryObject()->byId($id)->fetchOneOrNull()) {
+		if (!$entity = $this->createQueryObject()->byId($id)->fetchOneOrNull()) {
 			$this->getPresenter()->error();
 		}
 
@@ -205,15 +233,9 @@ abstract class BaseGrid extends Control
 		return null;
 	}
 
-	protected function getDataSource(): QueryObject
-	{
-		if ($this->queryObject) {
-			return $this->queryObject;
-		}
-
-		return $this->createQueryObject();
-	}
-
+	/**
+	 * @throws DatagridException
+	 */
 	protected function addIsActive(DataGrid $grid): void
 	{
 		$class = $this->createQueryObject()->getEntityClass();
@@ -241,14 +263,5 @@ abstract class BaseGrid extends Control
 
 		$grid->addColumnText('isActive', 'app.forms.global.isActive');
 		$grid->setColumnsOrder($order);
-	}
-
-	protected function getQueryObject(): QueryObject
-	{
-		if ($this->queryObject) {
-			return $this->queryObject;
-		}
-
-		return $this->queryObject = $this->createQueryObject();
 	}
 }

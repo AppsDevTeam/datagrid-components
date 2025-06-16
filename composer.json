@@ -4,7 +4,7 @@
   "license": ["MIT"],
   "require": {
     "php": ">=8.4",
-    "ublaboo/datagrid": "dev-feature/excel-export",
+    "ublaboo/datagrid": "dev-feature/excel-export as v7.0.0",
     "adt/query-object-data-source": "^3.0",
     "contributte/translation": "^2.0",
     "kdyby/autowired": "^3.0",
