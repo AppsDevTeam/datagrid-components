@@ -4,14 +4,13 @@ namespace ADT\Datagrid\Model\Export\Excel;
 
 use ADT\Datagrid\Model\Export\Excel\Model\ExcelDataModel;
 use ADT\Datagrid\Model\Export\Excel\Response\ExcelResponse;
-use Ublaboo\Datagrid\DataGrid;
-use Ublaboo\DataGrid\Export\Export;
+use Contributte\Datagrid\Datagrid;
+use Contributte\Datagrid\Export\Export;
 
 class ExportExcel extends Export
 {
-
 	public function __construct(
-		DataGrid $grid,
+		Datagrid $grid,
 		string $text,
 		string $name,
 		bool $filtered,
@@ -33,7 +32,7 @@ class ExportExcel extends Export
 	{
 		return function (
 			array $data,
-			DataGrid $grid
+			Datagrid $grid
 		) use ($name): void {
 			$columns = $this->getColumns();
 
@@ -46,5 +45,4 @@ class ExportExcel extends Export
 			$this->grid->getPresenter()->sendResponse(new ExcelResponse($excelDataModel->getSimpleData(), $name));
 		};
 	}
-
 }
