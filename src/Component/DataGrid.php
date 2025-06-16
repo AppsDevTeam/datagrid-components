@@ -7,7 +7,6 @@ namespace ADT\Datagrid\Component;
 use ADT\BackgroundQueue\BackgroundQueue;
 use ADT\Datagrid\Model\Export\Excel\ExportExcel;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
-use ADT\DoctrineComponents\QueryObject\QueryObjectInterface;
 use ADT\QueryObjectDataSource\QueryObjectDataSource;
 use ADT\Datagrid\Model\Service\DataGridService;
 use ADT\Datagrid\Model\Utils;

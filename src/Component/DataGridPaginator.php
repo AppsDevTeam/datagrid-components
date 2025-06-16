@@ -9,7 +9,7 @@ use Nette;
 /**
  * @property-read Nette\Application\UI\ITemplate $template
  */
-class DataGridPaginator extends \Ublaboo\DataGrid\Components\DataGridPaginator\DataGridPaginator
+class DataGridPaginator extends \Contributte\Datagrid\Components\DatagridPaginator\DatagridPaginator
 {
 	public function getTemplateFile(): string
 	{
