@@ -345,8 +345,9 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		bool   $filtered = true
 	): ExportExcel
 	{
-		return parent::addExportExcel('', $fileName, $filtered)
-			->setIcon('file-export');
+		$export = new ExportExcel($this, $text, $fileName, $filtered);
+		$this->addToExports($export);
+		return $export;
 	}
 
 	public function isFilterActive(): bool
