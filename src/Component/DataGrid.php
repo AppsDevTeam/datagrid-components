@@ -414,13 +414,13 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $this->filters[$key] = $filterAjaxSelect;
 	}
 
-	public function getGridFilterFields(array $fields = [], bool $includeAllColumns = true): array
+	public function getGridFilterFields(): array
 	{
-		if ($includeAllColumns) {
-			$fields = [
-				...array_map(fn(string $key) => ['id' => $key], array_keys($this->columns)),
-				...$fields
-			];
+		$filters = $this->filters;
+		unset ($filters['search']);
+		unset ($filters['advancedSearch']);
+		foreach ($filters as $_filter) {
+			$fields[] = ['id' => $_filter->getKey()];
 		}
 
 		foreach ($fields as &$field) {
