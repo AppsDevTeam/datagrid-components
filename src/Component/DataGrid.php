@@ -514,11 +514,9 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 						$label = $searchFilter['label'];
 
-						try {
-							$column = array_keys($this->getFilter($label)->getCondition());
-						} catch (Throwable) {
-							$column = $this->getColumn($label)->getColumn();
-						}
+						// without this line, I will get Typed property Contributte\Datagrid\Filter\Filter::$value must not be accessed before initialization
+						$this->getFilter($label)->setValue($value);
+						$column = array_keys($this->getFilter($label)->getCondition());
 
 						$query->by(
 							(!empty($column) ? $column : $label),
