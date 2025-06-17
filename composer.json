@@ -13,7 +13,8 @@
     "adt/doctrine-components": "^3.0",
     "nette/mail": "^4.0",
     "nette/security": "^3.2",
-    "adt/nette-application-components": "^1.0"
+    "adt/nette-application-components": "^1.0",
+    "adt/utils": "^2.12"
   },
   "autoload": {
     "psr-4": {

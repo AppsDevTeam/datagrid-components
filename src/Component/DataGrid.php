@@ -6,10 +6,11 @@ namespace ADT\Datagrid\Component;
 
 use ADT\BackgroundQueue\BackgroundQueue;
 use ADT\Datagrid\Model\Export\Excel\ExportExcel;
+use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\QueryObjectDataSource\QueryObjectDataSource;
 use ADT\Datagrid\Model\Service\DataGridService;
-use ADT\Datagrid\Model\Utils;
+use ADT\Utils\Utils;
 use App\Model\Entities\GridFilter;
 use App\Model\Queries\Base\BaseQuery;
 use App\Model\Queries\Factories\GridFilterQueryFactory;
@@ -453,14 +454,14 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $fields;
 	}
 
-	public function addAdvancedFilteredSearch(array $fields = [], bool $includeAllColumns = true): void
+	public function addAdvancedFilteredSearch(): void
 	{
-		$fields = $this->getGridFilterFields($fields, $includeAllColumns);
+		$fields = $this->getGridFilterFields();
 
 		$this->addFilterText('advancedSearch', '', [])
-			->setCondition(function (BaseQuery $query, $value) {
+			->setCondition(function (QueryObject $query, $value) {
 				if ($value) {
-					$advanceSearch = Json::decode($value, Json::FORCE_ARRAY);
+					$advanceSearch = Json::decode($value, forceArrays: true);
 
 					$seenValues = [];
 					foreach ($advanceSearch as $key => $item) {
@@ -494,7 +495,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 						if (!empty($searchFilter['value2'])) {
 							$value = [
-								\App\Model\Utils::getDateTimeFromArray($searchFilter['value']) ?: $searchFilter['value'],
+								Utils::getDateTimeFromArray($searchFilter['value']) ?: $searchFilter['value'],
 								Utils::getDateTimeFromArray($searchFilter['value2']) ?: $searchFilter['value2'],
 							];
 						} else {
