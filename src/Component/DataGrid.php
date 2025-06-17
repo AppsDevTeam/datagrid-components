@@ -420,6 +420,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$filters = $this->filters;
 		unset ($filters['search']);
 		unset ($filters['advancedSearch']);
+		$fields = [];
 		foreach ($filters as $_filter) {
 			$fields[] = ['id' => $_filter->getKey()];
 		}
