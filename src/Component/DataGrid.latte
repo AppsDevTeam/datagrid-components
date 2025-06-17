@@ -17,7 +17,7 @@
 {varType Ublaboo\DataGrid\Column\Action[] $actions}
 {varType Ublaboo\DataGrid\Column\Column[] $columns}
 
-<div class="datagrid datagrid-{$control->getName()} {implode(" ", $gridClasses)}" data-refresh-state="{link refreshState!}"
+<div class="datagrid datagrid-{$control->getName()} {implode(" ", $gridClasses)}" data-datagrid-name="{$control->getFullName()}" data-refresh-state="{link refreshState!}"
 	{ifset $gridHtmlDataAttributes}{implode(" ", $gridHtmlDataAttributes)|noescape}{/ifset}
 >
 	{**
