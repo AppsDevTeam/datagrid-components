@@ -427,6 +427,11 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 		foreach ($fields as &$field) {
 			$id = $field['id'];
+
+			if (!isset($this->columns[$id])) {
+				continue;
+			}
+
 			$column = $this->columns[$id];
 
 			if (!empty($column)) {
