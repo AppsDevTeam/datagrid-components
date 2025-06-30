@@ -1,0 +1,12 @@
+{**
+ * @param Filter                         $filter
+ * @param Nette\Forms\Controls\TextInput $input
+ *}
+
+{if $outer}
+	<div class="form-check">
+		{formPair $input}
+	</div>
+{else}
+	{input $input}
+{/if}

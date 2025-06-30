@@ -6,6 +6,7 @@ namespace ADT\Datagrid\Component;
 
 use ADT\BackgroundQueue\BackgroundQueue;
 use ADT\Datagrid\Model\Export\Excel\ExportExcel;
+use ADT\Datagrid\Model\Filter\FilterCheckbox;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\QueryObjectDataSource\QueryObjectDataSource;
@@ -59,6 +60,8 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	protected bool $actionsToDropdown = true;
 
 	protected bool $showTableFoot = true;
+
+	protected bool $isActiveSwitcher = false;
 
 	public function isActionsToDropdown(): bool
 	{
@@ -352,6 +355,25 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $export;
 	}
 
+	public function addIsActiveSwitcher(): void
+	{
+		$this->isActiveSwitcher = true;
+		$this->addFilterSwitcher('isActive', 'app.forms.global.isActive');
+	}
+
+	public function addFilterSwitcher(
+		string $key,
+		string $name,
+		?string $column = null
+	): FilterCheckbox
+	{
+		$column ??= $key;
+
+		$this->addFilterCheck($key);
+
+		return $this->filters[$key] = new FilterCheckbox($this, $key, $name, $column);
+	}
+
 	public function isFilterActive(): bool
 	{
 		$filters = $this->filter;
@@ -363,6 +385,10 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 			$filters['advancedSearch'] = null;
 		}
 
+		if (isset($filters['isActive']) && $filters['isActive'] === 'false') {
+			$filters['isActive'] = null;
+		}
+
 		$is_filter = ArraysHelper::testTruthy($filters);
 
 		return $is_filter || $this->forceFilterActive;
@@ -372,10 +398,12 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	public function handleResetFilter(): void
 	{
 		$searchFilter = $this->filter['search'] ?? null;
+		$isActive = $this->filter['isActive'] ?? null;
 		$advancedSearchFilter = $this->filter['advancedSearch'] ?? null;
 		parent::handleResetFilter();
 
 		if ($searchFilter) {
+			$this->filter['isActive'] = $isActive;
 			$this->filter['search'] = $searchFilter;
 			$this->filter['advancedSearch'] = $advancedSearchFilter;
 		}
@@ -419,6 +447,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	{
 		$filters = $this->filters;
 		unset ($filters['search']);
+		unset ($filters['isActive']);
 		unset ($filters['advancedSearch']);
 		$fields = [];
 		foreach ($filters as $_filter) {
