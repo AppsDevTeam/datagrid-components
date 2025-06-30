@@ -9,6 +9,7 @@ use ADT\Datagrid\Model\Entities\GridExport;
 use ADT\Datagrid\Model\Export\Excel\ExportExcel;
 use ADT\Datagrid\Model\Queries\GridFilterQueryFactory;
 use ADT\DoctrineComponents\EntityManager;
+use ADT\Datagrid\Model\Filter\FilterCheckbox;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\Forms\BootstrapFormRenderer;
@@ -58,6 +59,8 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	{
 		return [];
 	}
+
+	protected bool $isActiveSwitcher = false;
 
 	public function isActionsToDropdown(): bool
 	{
@@ -323,9 +326,32 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $export;
 	}
 
+	public function addIsActiveSwitcher(): void
+	{
+		$this->isActiveSwitcher = true;
+		$this->addFilterSwitcher('isActive', 'app.forms.global.isActive', 'isActive');
+	}
+
+	public function addFilterSwitcher(
+		string $key,
+		string $name,
+		?string $column = null
+	): FilterCheckbox
+	{
+		$column ??= $key;
+
+		$this->addFilterCheck($key);
+
+		return $this->filters[$key] = new FilterCheckbox($this, $key, $name, $column);
+	}
+
 	public function isFilterActive(?string $filter = null): bool
 	{
 		$filters = $filter ? [$filter => ($this->filter[$filter] ?? null)] : $this->filter;
+
+		if (isset($filters['isActive']) && $filters['isActive'] === 'false') {
+			$filters['isActive'] = null;
+		}
 
 		$is_filter = ArraysHelper::testTruthy($filters);
 
@@ -335,8 +361,10 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	public function handleResetAdvancedFilter(): void
 	{
 		$searchFilter = $this->filter['search'] ?? null;
+		$isActive = $this->filter['isActive'] ?? null;
 		$this->handleResetFilter();
 		if ($searchFilter) {
+			$this->filter['isActive'] = $isActive;
 			$this->filter['search'] = $searchFilter;
 		}
 	}
@@ -519,13 +547,13 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->em = $em;
 		return $this;
 	}
-	
+
 	public function setEmail(string $email): static
 	{
 		$this->email = $email;
 		return $this;
 	}
-	
+
 	public function setGridName(string $gridName): static
 	{
 		$this->gridName = $gridName;

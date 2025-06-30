@@ -315,6 +315,7 @@ abstract class BaseGrid extends Control
 
 		$grid->addColumnText('isActive', 'app.forms.global.isActive');
 		$grid->setColumnsOrder($order);
+		$grid->addIsActiveSwitcher();
 	}
 
 	/**
