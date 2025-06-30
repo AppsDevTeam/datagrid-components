@@ -8,19 +8,15 @@ use ADT\BackgroundQueue\BackgroundQueue;
 use ADT\Datagrid\Model\Entities\GridExport;
 use ADT\Datagrid\Model\Export\Excel\ExportExcel;
 use ADT\Datagrid\Model\Queries\GridFilterQueryFactory;
+use ADT\Datagrid\Model\Service\DatagridService;
 use ADT\DoctrineComponents\EntityManager;
+use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\Forms\BootstrapFormRenderer;
+use ADT\Datagrid\Filter\FilterSwitcher;
 use ADT\QueryObjectDataSource\QueryObjectDataSource;
-use ADT\Datagrid\Model\Service\DatagridService;
 use ADT\Utils\Utils;
-use DateTimeInterface;
-use Nette;
-use Nette\Application\Responses\FileResponse;
-use Nette\Application\UI\Form;
-use Nette\Utils\DateTime;
-use Nette\Utils\Json;
 use Contributte\Datagrid\Column\ColumnDateTime;
 use Contributte\Datagrid\Column\ColumnNumber;
 use Contributte\Datagrid\Exception\DataGridException;
@@ -29,6 +25,12 @@ use Contributte\Datagrid\Filter\Filter;
 use Contributte\Datagrid\Filter\FilterMultiSelect;
 use Contributte\Datagrid\Filter\FilterSelect;
 use Contributte\Datagrid\Utils\ArraysHelper;
+use DateTimeInterface;
+use Nette;
+use Nette\Application\Responses\FileResponse;
+use Nette\Application\UI\Form;
+use Nette\Utils\DateTime;
+use Nette\Utils\Json;
 
 class DataGrid extends \Contributte\Datagrid\Datagrid
 {
@@ -53,6 +55,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	protected bool $rememberState = false;
 	protected string $gridName;
 	protected string $email;
+	private bool $isActiveValue = true;
 
 	public function getSessionData(?string $key = null, mixed $defaultValue = null): array
 	{
@@ -126,6 +129,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->template->gridHtmlDataAttributes = $this->htmlDataAttributes;
 		$this->template->showTableFoot = $this->showTableFoot;
 		$this->template->toolbarButons = $this->toolbarButtons;
+		$this->template->isActiveValue = $this->isActiveValue;
 		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetch();
 
 		parent::render();
@@ -323,9 +327,59 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $export;
 	}
 
+	/**
+	 * @throws DataGridException
+	 */
+	public function addIsActiveSwitcher(): void
+	{
+		$postRequest = $this->getPresenter()->getRequest()->getPost('filter');
+		$isActive = $this->addFilterSwitcher('isActive', 'app.forms.global.isActive.label', 'isActive')
+			->setValue(true)
+			->addAttribute('title', $this->translator->translate('app.forms.global.isActive.title'));
+
+		if (
+			(isset($this->params['filter']['isActive']) && $this->params['filter']['isActive'] === 'true')
+			|| (isset($postRequest['isActive']) && $postRequest['isActive'] === '1')
+		) {
+			$isActive
+				->setValue(true)
+				->setDefaultValue(true)
+				->addAttribute('checked', 'checked');
+		}
+		elseif (
+			(isset($this->params['filter']['isActive']) && $this->params['filter']['isActive'] === 'false')
+			|| (isset($postRequest['isActive']) && $postRequest['isActive'] === '0')
+		) {
+			$isActive->setCondition(function (IsActiveFilter $query) {
+				$query->disableIsActiveFilter();
+			});
+			$this->isActiveValue = false;
+		}
+	}
+
+	/**
+	 * @throws DatagridException
+	 */
+	public function addFilterSwitcher(
+		string $key,
+		string $name,
+		?string $column = null
+	): FilterSwitcher
+	{
+		$column ??= $key;
+
+		$this->addFilterCheck($key);
+
+		return $this->filters[$key] = new FilterSwitcher($this, $key, $name, $column);
+	}
+
 	public function isFilterActive(?string $filter = null): bool
 	{
 		$filters = $filter ? [$filter => ($this->filter[$filter] ?? null)] : $this->filter;
+
+		if (isset($filters['isActive']) && $filters['isActive'] === 'false') {
+			$filters['isActive'] = null;
+		}
 
 		$is_filter = ArraysHelper::testTruthy($filters);
 
@@ -335,8 +389,10 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	public function handleResetAdvancedFilter(): void
 	{
 		$searchFilter = $this->filter['search'] ?? null;
+		$isActive = $this->filter['isActive'] ?? null;
 		$this->handleResetFilter();
 		if ($searchFilter) {
+			$this->filter['isActive'] = $isActive;
 			$this->filter['search'] = $searchFilter;
 		}
 	}
@@ -519,13 +575,13 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->em = $em;
 		return $this;
 	}
-	
+
 	public function setEmail(string $email): static
 	{
 		$this->email = $email;
 		return $this;
 	}
-	
+
 	public function setGridName(string $gridName): static
 	{
 		$this->gridName = $gridName;
