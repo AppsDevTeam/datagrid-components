@@ -17,6 +17,7 @@ use App\Model\Queries\Factories\GridFilterQueryFactory;
 use App\UI\Portal\Components\Forms\Base\FormRenderer;
 use App\UI\Portal\Components\Panels\GridFilterPanelControl\GridFilterPanelControlFactory;
 use App\UI\Portal\Components\SidePanels\SidePanelControl;
+use DateTimeInterface;
 use Nette;
 use Nette\Application\UI\Form;
 use Nette\Utils\DateTime;
@@ -506,6 +507,11 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 							];
 						} else {
 							$value = Utils::getDateTimeFromArray($searchFilter['value']) ?: $searchFilter['value'];
+
+							if ($value instanceof DateTimeInterface) {
+								$value = $value->format('Y-m-d H:i:s');
+							}
+
 							if ($operatorMap[$searchFilter['operator']] === QueryObjectByMode::IN_ARRAY && !is_array($value)) {
 								$delimiter = $searchFilter['delimiter'] ?? ',';
 								$value = explode($delimiter, $value);
