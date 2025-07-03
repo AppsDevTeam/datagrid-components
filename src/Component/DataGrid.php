@@ -120,7 +120,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 	public function render(): void
 	{
-		$gridClass = get_class($this->getParent());
+		$gridClass = $this->getParent()->getName();
 
 		if ($this->getParameter(self::SELECTED_GRID_FILTER_SESSION_KEY)) {
 			if (
