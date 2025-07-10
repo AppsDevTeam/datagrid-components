@@ -466,7 +466,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->addFilterText('advancedSearch', '', [])
 			->setCondition(function (QueryObject $query, $value) {
 				if ($value) {
-					$advanceSearch = Json::decode($value, forceArrays: true);
+					$advanceSearch = $value;
 
 					$seenValues = [];
 					foreach ($advanceSearch as $key => $item) {
@@ -550,5 +550,15 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	{
 		$this->gridFilterQueryFactory = $queryFactory;
 		return $this;
+	}
+
+	public function reload(array $snippets = []): void
+	{
+		if ($this->getPresenter()->isAjax()) {
+			$this->redrawControl('outer-filters');
+			parent::reload($snippets);
+		} else {
+			$this->getPresenter()->redirect('this');
+		}
 	}
 }
