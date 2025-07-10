@@ -11,7 +11,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Nette\ComponentModel\IComponent;
 use Nette\Forms\Form;
-use Nette\Utils\Json;
 use Nette\Utils\JsonException;
 
 trait GridFilterFormTrait
@@ -262,7 +261,7 @@ trait GridFilterFormTrait
 			};
 	}
 
-	public function validateForm(Form $form, array $inputs, ?Entity $gridFilter): void
+	public function validateForm(\ADT\DoctrineForms\Form $form, array $inputs, ?Entity $gridFilter): void
 	{
 		$gridFilterQuery = $this->getGridFilterQuery()
 			->byName($inputs['name'])
@@ -292,10 +291,12 @@ trait GridFilterFormTrait
 
 		/** @var DataGrid $grid */
 		$grid = $this->getGrid()['grid'];
-
-		$filters = array_merge($this->getGrid()['grid']->getParameters()['filter'], ['advancedSearch' => Json::encode($inputs)]);
-		$grid->setFilter($filters);
-
+		$grid->setFilter(
+			array_merge(
+				$this->getGrid()['grid']->getParameters()['filter'],
+				['advancedSearch' => $inputs['value']]
+			)
+		);
 		$grid->handleRefreshState();
 	}
 
