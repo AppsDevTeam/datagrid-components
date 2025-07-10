@@ -61,6 +61,13 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 	protected bool $showTableFoot = true;
 
+	protected bool $rememberState = false;
+
+	public function getSessionData(?string $key = null, mixed $defaultValue = null): mixed
+	{
+		return [];
+	}
+
 	public function isActionsToDropdown(): bool
 	{
 		return $this->actionsToDropdown;
