@@ -17,7 +17,7 @@ use Nette\Utils\JsonException;
 trait GridFilterFormTrait
 {
 	abstract protected function getEntityManager(): EntityManagerInterface;
-	abstract protected function getEntityClass(): string;
+	abstract protected function getEntityClass(): ?string;
 	abstract protected function getGridFilterQuery(): GridFilterQuery;
 	abstract public function lookup(?string $type, bool $throw = true): ?IComponent;
 	abstract public function redrawControl(?string $snippet = null, bool $redraw = true): void;
