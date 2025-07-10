@@ -1,0 +1,105 @@
+{form form}
+	{include errors}
+
+	<div n:snippet="filterList" class="row row-filter">
+		{var $form = $control['form']}
+		{var ADT\Forms\DynamicContainer $valueDynamicContainer = $form['value']}
+		{foreach $valueDynamicContainer->getContainers() as $_container}
+			{include gridFilterTemplate, container => $_container}
+		{/foreach}
+	</div>
+
+	<button type="button" class="btn btn-secondary mb-4" data-adt-replicator-add-filter>
+		<i class="fa fa-plus-circle me-2"></i>Přidat filtr {* TODO TRANSLATE *}
+	</button>
+
+	{capture $stockContainer}
+		{include gridFilterTemplate container => $form['value']->getTemplate()}
+	{/capture}
+
+	<div class="row">
+		{formPair 'save'}
+	</div>
+
+	<div id="name-block" class="row">
+		{formPair 'name'}
+	</div>
+
+	<div class="row">
+		<div class="col-12">
+			{formPair 'submit'}
+			{formPair 'autoSubmit' class => 'd-none'}
+		</div>
+	</div>
+{/form}
+
+{define gridFilterTemplate}
+	{formContainer $container}
+		<div data-adt-replicator-item>
+			<div class="row align-items-end">
+				<div class="col-5">
+					<h5 class="mb-0 fw-normal">Filtr</h5>{* TODO TRANSLATE *}
+				</div>
+				<div class="col-7 d-flex justify-content-end">
+					<a href="#" class="text-decoration-none" data-adt-replicator-remove>
+						<i class="fa-solid fa-xmark"></i>&nbsp;<span class="delete-text text-decoration-underline">Odstranit</span> {* TODO TRANSLATE *}
+					</a>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-6">
+					{formPair 'label', class => 'auto-submit'}
+				</div>
+
+				<div class="col-6">
+					{ifset $container['operator']}
+						{formPair 'operator', class => 'auto-submit'}
+					{/ifset}
+				</div>
+			</div>
+
+			<div class="row mt-2">
+				{ifset $container['value2']}
+					<div class="input-group">
+						<div class="col-md-6">
+							{formPair 'value'}
+						</div>
+						<div class="col-md-6">
+							{formPair 'value2'}
+						</div>
+					</div>
+				{elseifset $container['delimiter']}
+					<div class="col-md-8">
+						{formPair 'value'}
+					</div>
+					<div class="col-md-4">
+						{formPair 'delimiter'}
+					</div>
+				{elseifset $container['value']}
+					<div class="col-md-12">
+						{formPair 'value'}
+					</div>
+				{/ifset}
+			</div>
+
+		</div>
+	{/formContainer}
+{/define}
+
+<script>
+    $(document).ready(function() {
+        const $form = $(document).find(`#{$form->getElementPrototype()->id|noescape}`);
+
+        $form.find('.row-filter').formReplicator({
+            template: $.parseHTML(`{$stockContainer|trim|noescape}`)[0].outerHTML,
+            addStaticButton: $form.find('[data-adt-replicator-add-filter]'),
+            addStaticButtonShowAlways: true,
+        });
+
+        $form.find('.row-filter').click((e) => {
+            $form.find('.auto-submit').change(() => {
+                $form.find('button[name="autoSubmit"]').click();
+            })
+		})
+    });
+</script>

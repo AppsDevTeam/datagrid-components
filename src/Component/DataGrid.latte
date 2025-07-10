@@ -61,13 +61,13 @@
 						<div class="d-flex justify-content-end align-items-end">
 							<div n:if="isset($filters['advancedSearch'])" data-adt-dashboard-filter>
 								<div n:class="btn-group, dropdown-filter, ($selectedGridFilter || $temporaryGridFilter) ? selected">
-									<a href="{plink editGridFilter! 'editId' => $selectedGridFilter['id'] ?? null, gridFilterClass => $gridClass, columns => $gridFilterColumns}" class="btn">
+									<a href="{$control->link('editAdvancedFilter!', ['editId' => $selectedGridFilter['id'] ?? null])}" class="btn">
 										<div class="dropdown-selected-name-wrapper">
 											<i class="fa-solid fa-filter"></i>
-											<span class="dropdown-selected-name">{$temporaryGridFilter ? 'Aktivní filtr' : ($selectedGridFilter ? $selectedGridFilter['name'] : '')}</span>{* TODO translate *}
+											<span class="dropdown-selected-name">{$temporaryGridFilter ? 'Aktivní filtr' : ($selectedGridFilter ? $selectedGridFilter['name'] : '')}</span> TODO translate
 										</div>
 									</a>
-									<a href="{plink editGridFilter! gridFilterClass => $gridClass, columns => $gridFilterColumns}" class="btn">
+									<a href="{$control->link('editAdvancedFilter!')}" class="btn">
 										<span>
 											<i class="fa-solid fa-filter"></i>
 										</span>
@@ -97,7 +97,7 @@
 											</li>
 										{/foreach}
 										<li class="dropdown-item new-filter" id="add-button">
-											<a href="{plink editGridFilter! gridFilterClass => $gridClass, columns => $gridFilterColumns}">
+											<a href="{$control->link('editAdvancedFilter!')}">
 												<i class="fa-solid fa-plus"></i>
 												Přidat nový filtr {* TODO překlady *}
 											</a>

@@ -53,15 +53,12 @@ abstract class BaseGrid extends Control
 		$grid = new ($this->getDataGridClass())(static::$templateFile);
 		$grid->setTranslator($this->getTranslator());
 		$grid->setGridFilterQuery($this->getGridFilterQueryFactory());
-
 		$grid->setOuterFilterRendering();
 
 		$queryObject = $this->createQueryObject();
-
 		$this->initQueryObject($queryObject);
 
 		$queryObjectDataSource = $this->getQueryObjectDataSourceFactory()->create($queryObject);
-
 		if ($this->getDataSourceFilterCallback()) {
 			$queryObjectDataSource->setFilterCallback($this->getDataSourceFilterCallback());
 		}

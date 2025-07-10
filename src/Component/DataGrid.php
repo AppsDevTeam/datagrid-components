@@ -145,8 +145,6 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->template->gridHtmlDataAttributes = $this->htmlDataAttributes;
 		$this->template->showTableFoot = $this->showTableFoot;
 		$this->template->toolbarButons = $this->toolbarButtons;
-		$this->template->gridFilterColumns = Json::encode($this->getGridFilterFields());
-		$this->template->gridClass = $gridClass;
 		$this->template->selectedGridFilter = $this->getSessionData(self::SELECTED_GRID_FILTER_SESSION_KEY);
 		$this->template->temporaryGridFilter = $this->getSessionData(self::TEMPORARY_GRID_FILTER_SESSION_KEY);
 		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid($gridClass)->fetch();
@@ -552,34 +550,5 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	{
 		$this->gridFilterQueryFactory = $queryFactory;
 		return $this;
-	}
-
-	public function handleEditGridFilter(): void
-	{
-		$this->redrawSidePanel('gridFilter');
-	}
-
-	public function createComponentGridFilterSidePanel(GridFilterPanelControlFactory $factory): SidePanelControl
-	{
-		if ($this->getParameter('columns')) {
-			$this->gridFilterParameters = Json::decode($this->getParameter('columns'), forceArrays: true);
-		}
-		if ($this->getParameter('gridFilterClass')) {
-			$this->gridFilterClass = $this->getParameter('gridFilterClass');
-		}
-
-		$gridFilter = $this->getParameter('editId')
-			? $this->gridFilterQueryFactory->create()->byId($this->getParameter('editId'))->fetchOneOrNull()
-			: (new GridFilter())
-				->setGrid($this->gridFilterClass)
-				->setCompany($this->securityUser->getIdentity()->getFilteredCompany());
-
-		$form = $this->gridFilterFormFactory->create()
-			->setEntity($gridFilter)
-			->setFilterList($this->gridFilterParameters);
-
-		return $factory->create()
-			->setEntity($gridFilter)
-			->setForm($form);
 	}
 }
