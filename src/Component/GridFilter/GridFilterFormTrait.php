@@ -6,7 +6,6 @@ use ADT\Datagrid\Component\BaseGrid;
 use ADT\Datagrid\Component\DataGrid;
 use ADT\Datagrid\Model\Entities\GridFilter;
 use ADT\Datagrid\Model\Queries\GridFilterQuery;
-use ADT\DoctrineForms\Entity;
 use ADT\Forms\StaticContainer;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -275,7 +274,7 @@ trait GridFilterFormTrait
 		}
 	}
 
-	public function validateForm(\ADT\DoctrineForms\Form $form, array $inputs, ?Entity $gridFilter): void
+	public function validateForm(\ADT\DoctrineForms\Form $form, array $inputs, ?GridFilter $gridFilter): void
 	{
 		$gridFilterQuery = $this->getGridFilterQuery()
 			->byName($inputs['name'])
