@@ -13,7 +13,7 @@
  * @param InlineEdit|null $inlineEdit  Inline editing data
  * @param InlineEdit|null $inlineAdd   Inline add data
  *}
-{varType App\Components\Grids\Base\Datagrid $control}
+{varType ADT\Datagrid\Component\DataGrid $control}
 {varType Ublaboo\DataGrid\Column\Action[] $actions}
 {varType Ublaboo\DataGrid\Column\Column[] $columns}
 
@@ -58,16 +58,16 @@
 							{/ifset}
 						{/ifset}
 
-						<div class="d-flex justify-content-end align-items-end">
+						<div n:snippet="advanced-filter" class="d-flex justify-content-end align-items-end">
 							<div n:if="isset($filters['advancedSearch'])" data-adt-dashboard-filter>
-								<div n:class="btn-group, dropdown-filter, ($selectedGridFilter || $temporaryGridFilter) ? selected">
-									<a href="{$control->link('editAdvancedFilter!', ['editId' => $selectedGridFilter['id'] ?? null])}" class="btn">
+								<div n:class="btn-group, dropdown-filter, ($control->isFilterActive('advancedSearch') || $selectedGridFilter) ? selected">
+									<a href="{$control->getParent()->link('editAdvancedFilter!', ['editId' => $selectedGridFilter?->getId()])}" class="btn">
 										<div class="dropdown-selected-name-wrapper">
 											<i class="fa-solid fa-filter"></i>
-											<span class="dropdown-selected-name">{$temporaryGridFilter ? 'Aktivní filtr' : ($selectedGridFilter ? $selectedGridFilter['name'] : '')}</span> TODO translate
+											<span class="dropdown-selected-name">{$selectedGridFilter?->getName() ?: ($control->isFilterActive('advancedSearch') ? 'Aktivní filtr' : '')}</span> {*TODO translate*}
 										</div>
 									</a>
-									<a href="{$control->link('editAdvancedFilter!')}" class="btn">
+									<a href="{$control->getParent()->link('editAdvancedFilter!')}" class="btn">
 										<span>
 											<i class="fa-solid fa-filter"></i>
 										</span>
@@ -79,16 +79,19 @@
 									<button type="button" class="btn dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
 									</button>
 
+                                    <div style="display: none">
+                                        {input $control['filter']['filter'][\ADT\Datagrid\Component\DataGrid::SELECTED_GRID_FILTER_KEY]}
+                                    </div>
 									<ul class="dropdown-menu dropdown-menu-end">
 										{foreach $gridFilters as $gridFilter}
-											<li n:class="dropdown-item, $selectedGridFilter && $selectedGridFilter['id'] === $gridFilter->getId() ? 'selected'">
-												<a n:href="this selectedGridFilter => $gridFilter->getId()">
+											<li n:class="dropdown-item, $selectedGridFilter === $gridFilter ? 'selected'">
+												<a onclick="$(this).closest('form').find('[name=\'filter[advancedFilterId]\']').val({$gridFilter->getId()}); $(this).closest('form')[0].submit()">
 													{$gridFilter->getName()}
 													<div class="filter-item-actions">
-                                                        <a class="btn-edit" href="{plink editGridFilter! 'editId' => $gridFilter->getId(), columns => $gridFilterColumns}">
+                                                        <a class="btn-edit" href="{plink editGridFilter! 'editId' => $gridFilter->getId()}">
                                                             <i class="fa-solid fa-pen"></i>
                                                         </a>
-                                                        <a class="btn-edit" href="{plink removeGridFilter! 'removeId' => $gridFilter->getId(), columns => $gridFilterColumns}">
+                                                        <a class="btn-edit" href="{plink removeGridFilter! 'removeId' => $gridFilter->getId()}">
                                                             <i class="fa-solid fa-trash"></i>
                                                         </a>
                                                     </div>
@@ -97,7 +100,7 @@
 											</li>
 										{/foreach}
 										<li class="dropdown-item new-filter" id="add-button">
-											<a href="{$control->link('editAdvancedFilter!')}">
+											<a href="{$control->getParent()->link('editAdvancedFilter!')}">
 												<i class="fa-solid fa-plus"></i>
 												Přidat nový filtr {* TODO překlady *}
 											</a>

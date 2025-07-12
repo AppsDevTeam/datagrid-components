@@ -35,8 +35,7 @@ use Throwable;
 
 class DataGrid extends \Contributte\Datagrid\Datagrid
 {
-	const string SELECTED_GRID_FILTER_SESSION_KEY = 'selectedGridFilter';
-	const string TEMPORARY_GRID_FILTER_SESSION_KEY = 'temporaryGridFilter';
+	const string SELECTED_GRID_FILTER_KEY = 'advancedFilterId';
 
 	public const TEMPLATE_DEFAULT = 'DataGrid.latte';
 	public const TEMPLATE_PRETTY = 'DataGridPretty.latte';
@@ -46,22 +45,15 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	];
 
 	protected BackgroundQueue $backgroundQueue;
-
 	protected GridFilterQueryFactory $gridFilterQueryFactory;
-
 	public bool $strictSessionFilterValues = false;
-
-	/** @var string */
 	protected string $templateType;
-
 	protected array $classes = [];
 	protected array $htmlDataAttributes = [];
-
 	protected bool $actionsToDropdown = true;
-
 	protected bool $showTableFoot = true;
-
 	protected bool $rememberState = false;
+	protected string $gridName;
 
 	public function getSessionData(?string $key = null, mixed $defaultValue = null): mixed
 	{
@@ -127,34 +119,22 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 	public function render(): void
 	{
-		$gridClass = $this->getParent()->getName();
-
-		if ($this->getParameter(self::SELECTED_GRID_FILTER_SESSION_KEY)) {
-			if (
-				$selectedGridFilter = $this->gridFilterQueryFactory
-					->create()
-					->byId($this->getParameter(self::SELECTED_GRID_FILTER_SESSION_KEY))
-					->fetchOneOrNull()
-			) {
-				$this->saveSessionData(self::SELECTED_GRID_FILTER_SESSION_KEY, ['id' => $selectedGridFilter->getId(), 'name' => $selectedGridFilter->getName()]);
-				$this->setFilter(['advancedSearch' => Json::encode($selectedGridFilter->getValue())]);
-				$this->deleteSessionData(self::TEMPORARY_GRID_FILTER_SESSION_KEY);
-			}
+		$selectedGridFilter = null;
+		if ($this->isFilterActive(self::SELECTED_GRID_FILTER_KEY)) {
+			$selectedGridFilter = $this->gridFilterQueryFactory
+				->create()
+				->byId($this->filter[self::SELECTED_GRID_FILTER_KEY])
+				->fetchOne();
 		}
 
-		if ($this->getSessionData(self::TEMPORARY_GRID_FILTER_SESSION_KEY)) {
-			$this->deleteSessionData(self::SELECTED_GRID_FILTER_SESSION_KEY);
-		}
-
+		$this->template->selectedGridFilter = $selectedGridFilter;
 		$this->template->actionsToDropdown = $this->actionsToDropdown;
 		$this->template->translator = $this->translator;
 		$this->template->gridClasses = $this->classes;
 		$this->template->gridHtmlDataAttributes = $this->htmlDataAttributes;
 		$this->template->showTableFoot = $this->showTableFoot;
 		$this->template->toolbarButons = $this->toolbarButtons;
-		$this->template->selectedGridFilter = $this->getSessionData(self::SELECTED_GRID_FILTER_SESSION_KEY);
-		$this->template->temporaryGridFilter = $this->getSessionData(self::TEMPORARY_GRID_FILTER_SESSION_KEY);
-		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid($gridClass)->fetch();
+		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid($this->getParent()->getName())->fetch();
 
 		parent::render();
 	}
@@ -358,9 +338,10 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $export;
 	}
 
-	public function isFilterActive(): bool
+	public function isFilterActive(?string $filter = null): bool
 	{
-		$filters = $this->filter;
+		$filters = $filter ? [$filter => ($this->filter[$filter] ?? null)] : $this->filter;
+
 		if (isset($filters['search'])) {
 			$filters['search'] = null;
 		}
@@ -389,8 +370,6 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 	public function handleResetGridFilter(): void
 	{
-		$this->deleteSessionData(self::SELECTED_GRID_FILTER_SESSION_KEY);
-		$this->deleteSessionData(self::TEMPORARY_GRID_FILTER_SESSION_KEY);
 		$this->handleResetFilter();
 		$this->redirect('this');
 	}
@@ -421,11 +400,127 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $this->filters[$key] = $filterAjaxSelect;
 	}
 
+	public function addAdvancedFilteredSearch(): void
+	{
+		$this->addFilterSelect(static::SELECTED_GRID_FILTER_KEY, '', $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetchPairs())
+			->setPrompt('---')
+			->setCondition(function (QueryObject $query, $value) {
+				$this->applyAdvancedFilter($query, $this->gridFilterQueryFactory->create()->byGrid($this->getParent()->getName())->byId($value)->fetchOne()->getValue());
+			});
+		$this->addFilterText('advancedSearch', '')
+			->setCondition(function (QueryObject $query, $value) {
+				$this->applyAdvancedFilter($query, $value);
+			});
+	}
+
+	public function applyAdvancedFilter(QueryObject $query, array $value)
+	{
+		if ($value) {
+			$advanceSearch = $value;
+
+			$seenValues = [];
+			foreach ($advanceSearch as $key => $item) {
+				$fieldValue = $item['value'];
+
+				if (in_array($fieldValue, $seenValues)) {
+					// Odstraníme duplicity
+					unset($advanceSearch[$key]);
+				} else {
+					$seenValues[] = $fieldValue;
+				}
+			}
+			$advanceSearch = array_values($advanceSearch);
+
+			foreach ($advanceSearch as $searchFilter) {
+				$operatorMap = [
+					'eq' => QueryObjectByMode::EQUALS,
+					'ne' => QueryObjectByMode::NOT_EQUALS,
+					'sw' => QueryObjectByMode::STARTS_WITH,
+					'ct' => QueryObjectByMode::CONTAINS,
+					'nct' => QueryObjectByMode::NOT_CONTAINS,
+					'fw' => QueryObjectByMode::ENDS_WITH,
+					'in' => QueryObjectByMode::IN_ARRAY,
+					'null' => QueryObjectByMode::IS_NULL,
+					'nn' => QueryObjectByMode::IS_NOT_NULL,
+					'gt' => QueryObjectByMode::GREATER,
+					'lt' => QueryObjectByMode::LESS,
+					'bw' => QueryObjectByMode::BETWEEN,
+					'nbw' => QueryObjectByMode::NOT_BETWEEN,
+				];
+
+				if (!empty($searchFilter['value2'])) {
+					$value = [
+						Utils::getDateTimeFromArray($searchFilter['value']) ?: $searchFilter['value'],
+						Utils::getDateTimeFromArray($searchFilter['value2']) ?: $searchFilter['value2'],
+					];
+				} else {
+					$value = Utils::getDateTimeFromArray($searchFilter['value']) ?: $searchFilter['value'];
+
+					if ($value instanceof DateTimeInterface) {
+						$value = $value->format('Y-m-d H:i:s');
+					}
+
+					if ($operatorMap[$searchFilter['operator']] === QueryObjectByMode::IN_ARRAY && !is_array($value)) {
+						$delimiter = $searchFilter['delimiter'] ?? ',';
+						$value = explode($delimiter, $value);
+					}
+				}
+
+				if (
+					Utils::realEmpty($value)
+					&& !in_array($operatorMap[$searchFilter['operator']], [QueryObjectByMode::IS_NULL, QueryObjectByMode::IS_NOT_NULL])
+				) {
+					continue;
+				}
+
+				$label = $searchFilter['label'];
+
+				// without this line, I will get Typed property Contributte\Datagrid\Filter\Filter::$value must not be accessed before initialization
+				$this->getFilter($label)->setValue($value);
+				$column = array_keys($this->getFilter($label)->getCondition());
+
+				$query->by(
+					(!empty($column) ? $column : $label),
+					$value,
+					$operatorMap[$searchFilter['operator']] ?? QueryObjectByMode::EQUALS
+				);
+			}
+		}
+	}
+
+	public function setBackgroundQueue(BackgroundQueue $backgroundQueue): self
+	{
+		$this->backgroundQueue = $backgroundQueue;
+		return $this;
+	}
+
+	public function setGridFilterQuery(GridFilterQueryFactory $queryFactory): self
+	{
+		$this->gridFilterQueryFactory = $queryFactory;
+		return $this;
+	}
+
+	public function setGridName(string $gridName)
+	{
+		$this->gridName = $gridName;
+	}
+
+	public function reload(array $snippets = []): void
+	{
+		if ($this->getPresenter()->isAjax()) {
+			$this->redrawControl('advanced-filter');
+			parent::reload($snippets);
+		} else {
+			$this->getPresenter()->redirect('this');
+		}
+	}
+
 	public function getGridFilterFields(): array
 	{
 		$filters = $this->filters;
 		unset ($filters['search']);
 		unset ($filters['advancedSearch']);
+		unset ($filters[static::SELECTED_GRID_FILTER_KEY]);
 		$fields = [];
 		foreach ($filters as $_filter) {
 			$fields[] = ['id' => $_filter->getKey()];
@@ -464,108 +559,5 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		}
 
 		return $fields;
-	}
-
-	public function addAdvancedFilteredSearch(): void
-	{
-		$fields = $this->getGridFilterFields();
-
-		$this->addFilterText('advancedSearch', '', [])
-			->setCondition(function (QueryObject $query, $value) {
-				if ($value) {
-					$advanceSearch = $value;
-
-					$seenValues = [];
-					foreach ($advanceSearch as $key => $item) {
-						$fieldValue = $item['value'];
-
-						if (in_array($fieldValue, $seenValues)) {
-							// Odstraníme duplicity
-							unset($advanceSearch[$key]);
-						} else {
-							$seenValues[] = $fieldValue;
-						}
-					}
-					$advanceSearch = array_values($advanceSearch);
-
-					foreach ($advanceSearch as $searchFilter) {
-						$operatorMap = [
-							'eq' => QueryObjectByMode::EQUALS,
-							'ne' => QueryObjectByMode::NOT_EQUALS,
-							'sw' => QueryObjectByMode::STARTS_WITH,
-							'ct' => QueryObjectByMode::CONTAINS,
-							'nct' => QueryObjectByMode::NOT_CONTAINS,
-							'fw' => QueryObjectByMode::ENDS_WITH,
-							'in' => QueryObjectByMode::IN_ARRAY,
-							'null' => QueryObjectByMode::IS_NULL,
-							'nn' => QueryObjectByMode::IS_NOT_NULL,
-							'gt' => QueryObjectByMode::GREATER,
-							'lt' => QueryObjectByMode::LESS,
-							'bw' => QueryObjectByMode::BETWEEN,
-							'nbw' => QueryObjectByMode::NOT_BETWEEN,
-						];
-
-						if (!empty($searchFilter['value2'])) {
-							$value = [
-								Utils::getDateTimeFromArray($searchFilter['value']) ?: $searchFilter['value'],
-								Utils::getDateTimeFromArray($searchFilter['value2']) ?: $searchFilter['value2'],
-							];
-						} else {
-							$value = Utils::getDateTimeFromArray($searchFilter['value']) ?: $searchFilter['value'];
-
-							if ($value instanceof DateTimeInterface) {
-								$value = $value->format('Y-m-d H:i:s');
-							}
-
-							if ($operatorMap[$searchFilter['operator']] === QueryObjectByMode::IN_ARRAY && !is_array($value)) {
-								$delimiter = $searchFilter['delimiter'] ?? ',';
-								$value = explode($delimiter, $value);
-							}
-						}
-
-						if (
-							Utils::realEmpty($value)
-							&& !in_array($operatorMap[$searchFilter['operator']], [QueryObjectByMode::IS_NULL, QueryObjectByMode::IS_NOT_NULL])
-						) {
-							continue;
-						}
-
-						$label = $searchFilter['label'];
-
-						// without this line, I will get Typed property Contributte\Datagrid\Filter\Filter::$value must not be accessed before initialization
-						$this->getFilter($label)->setValue($value);
-						$column = array_keys($this->getFilter($label)->getCondition());
-
-						$query->by(
-							(!empty($column) ? $column : $label),
-							$value,
-							$operatorMap[$searchFilter['operator']] ?? QueryObjectByMode::EQUALS
-						);
-					}
-				}
-			})
-			->setAttribute('data-filter-fields', Json::encode($fields));
-	}
-
-	public function setBackgroundQueue(BackgroundQueue $backgroundQueue): self
-	{
-		$this->backgroundQueue = $backgroundQueue;
-		return $this;
-	}
-
-	public function setGridFilterQuery(GridFilterQueryFactory $queryFactory): self
-	{
-		$this->gridFilterQueryFactory = $queryFactory;
-		return $this;
-	}
-
-	public function reload(array $snippets = []): void
-	{
-		if ($this->getPresenter()->isAjax()) {
-			$this->redrawControl('outer-filters');
-			parent::reload($snippets);
-		} else {
-			$this->getPresenter()->redirect('this');
-		}
 	}
 }

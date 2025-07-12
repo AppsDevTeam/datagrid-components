@@ -7,6 +7,8 @@ use ADT\Datagrid\Component\DataGrid;
 use ADT\Datagrid\Model\Queries\GridFilterQuery;
 use ADT\DoctrineForms\Entity;
 use ADT\Forms\StaticContainer;
+use App\Model\Entities\GridFilter;
+use App\UI\Portal\Components\Forms\GridFilter\GridFilterForm;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Nette\ComponentModel\IComponent;
@@ -94,14 +96,19 @@ trait GridFilterFormTrait
 	/**
 	 * @throws Exception
 	 */
-	public function initForm(\ADT\DoctrineForms\Form $form, ?Entity $gridFilter): void
+	public function initForm(\ADT\DoctrineForms\Form $form, ?\ADT\Datagrid\Model\Entities\GridFilter $gridFilter): void
 	{
+		$defaults = [];
+		if (!$gridFilter) {
+			$defaults['value'] = $this->getGrid()['grid']->getParameters()['filter']['advancedSearch'] ?? [];
+		}
+
 		$filterList = [];
 		foreach ($this->getGrid()['grid']->getGridFilterFields() as $item) {
 			$filterList[$item['id']] = $item;
 		}
 
-		$form->addDynamicContainer('value', function (StaticContainer $container) use ($form, $filterList) {
+		$form->addDynamicContainer('value', function (StaticContainer $container) use ($form, $filterList, $gridFilter, $defaults) {
 			$columnItems = [];
 
 			foreach ($filterList as $filter) {
@@ -115,7 +122,11 @@ trait GridFilterFormTrait
 				->setRequired()
 				->setPrompt('---');
 
-			$form->mapToForm();
+			if ($gridFilter) {
+				$form->mapToForm();
+			} else {
+				$form->setDefaults($defaults);
+			}
 
 			$selectedType = $filterList[$container->getUntrustedValues()->label]['type'] ?? null;
 
@@ -259,6 +270,10 @@ trait GridFilterFormTrait
 			->onClick[] = function () {
 				$this->redrawControl('filterList');
 			};
+
+		if (!$gridFilter) {
+			$form->setDefaults($defaults);
+		}
 	}
 
 	public function validateForm(\ADT\DoctrineForms\Form $form, array $inputs, ?Entity $gridFilter): void
@@ -283,20 +298,27 @@ trait GridFilterFormTrait
 	/**
 	 * @throws JsonException
 	 */
-	public function processForm(array $inputs): void
+	public function processForm(GridFilter $gridFilter, array $inputs): void
 	{
+		$filters = $this->getGrid()['grid']->getParameters()['filter'];
 		if ($inputs['save']) {
+			$gridFilter = new GridFilter();
+			$gridFilter->setGrid($this->getGridName());
+			$gridFilter->setValue($inputs['value']);
+			$gridFilter->setName($inputs['name']);
 			$this->getEntityManager()->flush();
+			unset($filters['advancedSearch']);
+			$filters = array_merge($filters, [DataGrid::SELECTED_GRID_FILTER_KEY => $gridFilter->getId()]);
+		} else {
+			unset($filters[DataGrid::SELECTED_GRID_FILTER_KEY]);
+			$filters = array_merge($filters, ['advancedSearch' => $inputs['value']]);
 		}
+
+		$inputs['save'] = $inputs['save'] === true ? 1 : 0;
 
 		/** @var DataGrid $grid */
 		$grid = $this->getGrid()['grid'];
-		$grid->setFilter(
-			array_merge(
-				$this->getGrid()['grid']->getParameters()['filter'],
-				['advancedSearch' => $inputs['value']]
-			)
-		);
+		$grid->setFilter($filters);
 		$grid->handleRefreshState();
 	}
 
@@ -313,7 +335,10 @@ trait GridFilterFormTrait
 
 	protected function createEntity()
 	{
-		return new ($this->getEntityClass())()->setGrid($this->getGridName());
+		/** @var GridFilter $entity */
+		$entity = new ($this->getEntityClass());
+
+		return $entity->setGrid($this->getGridName());
 	}
 
 	protected function getTemplateFilename(): ?string
