@@ -23,7 +23,7 @@ trait GridFilterTrait
 		return $this->grid;
 	}
 
-	public function setGrid(string $grid): self
+	public function setGrid(string $grid): static
 	{
 		$this->grid = $grid;
 		return $this;
@@ -34,7 +34,7 @@ trait GridFilterTrait
 		return $this->name;
 	}
 
-	public function setName(string $name): self
+	public function setName(string $name): static
 	{
 		$this->name = $name;
 		return $this;
@@ -45,7 +45,7 @@ trait GridFilterTrait
 		return $this->value;
 	}
 
-	public function setValue(array $value): self
+	public function setValue(array $value): static
 	{
 		$this->value = $value;
 		return $this;
