@@ -7,7 +7,7 @@ namespace ADT\Datagrid\Model\Entities;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\Column;
 
-class GridFilterTrait
+trait GridFilterTrait
 {
 	#[ORM\Column(nullable: false)]
 	protected string $grid;
