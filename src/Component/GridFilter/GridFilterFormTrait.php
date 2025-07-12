@@ -4,11 +4,10 @@ namespace ADT\Datagrid\Component\GridFilter;
 
 use ADT\Datagrid\Component\BaseGrid;
 use ADT\Datagrid\Component\DataGrid;
+use ADT\Datagrid\Model\Entities\GridFilter;
 use ADT\Datagrid\Model\Queries\GridFilterQuery;
 use ADT\DoctrineForms\Entity;
 use ADT\Forms\StaticContainer;
-use App\Model\Entities\GridFilter;
-use App\UI\Portal\Components\Forms\GridFilter\GridFilterForm;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Nette\ComponentModel\IComponent;
@@ -96,7 +95,7 @@ trait GridFilterFormTrait
 	/**
 	 * @throws Exception
 	 */
-	public function initForm(\ADT\DoctrineForms\Form $form, ?\ADT\Datagrid\Model\Entities\GridFilter $gridFilter): void
+	public function initForm(\ADT\DoctrineForms\Form $form, ?GridFilter $gridFilter): void
 	{
 		$defaults = [];
 		if (!$gridFilter) {
@@ -188,7 +187,7 @@ trait GridFilterFormTrait
 			if ($container['label']->getValue()) {
 				if (isset($operatorItems)) {
 					$container->addSelect('operator', '', $operatorItems) // TODO translate
-						->setPrompt('---')
+					->setPrompt('---')
 						->setRequired();
 				}
 
@@ -241,7 +240,7 @@ trait GridFilterFormTrait
 
 								if ($operatorValue === self::EVO_API['sInList']) {
 									$container->addText('delimiter', 'Oddělovač') // TODO překlady
-										->setRequired()
+									->setRequired()
 										->setHtmlAttribute('placeholder', 'Oddělovač'); // TODO překlady
 								}
 						}
@@ -254,7 +253,7 @@ trait GridFilterFormTrait
 
 		$form->addCheckbox('save', 'Uložit') // TODO translate
 			->addCondition(Form::Equal, true)
-			->toggle('name-block');
+				->toggle('name-block');
 
 		if ($gridFilter) {
 			$form['save']->setDefaultValue(1);
@@ -298,14 +297,16 @@ trait GridFilterFormTrait
 	/**
 	 * @throws JsonException
 	 */
-	public function processForm(GridFilter $gridFilter, array $inputs): void
+	public function processForm(?GridFilter $gridFilter, array $inputs): void
 	{
 		$filters = $this->getGrid()['grid']->getParameters()['filter'];
 		if ($inputs['save']) {
-			$gridFilter = new GridFilter();
-			$gridFilter->setGrid($this->getGridName());
-			$gridFilter->setValue($inputs['value']);
-			$gridFilter->setName($inputs['name']);
+			if (!$gridFilter) {
+				$gridFilter = new ($this->getEntityClass());
+				$gridFilter->setGrid($this->getGridName());
+				$gridFilter->setValue($inputs['value']);
+				$gridFilter->setName($inputs['name']);
+			}
 			$this->getEntityManager()->flush();
 			unset($filters['advancedSearch']);
 			$filters = array_merge($filters, [DataGrid::SELECTED_GRID_FILTER_KEY => $gridFilter->getId()]);
