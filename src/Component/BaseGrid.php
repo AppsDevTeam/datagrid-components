@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\Datagrid\Component;
 
 use ADT\Application\BasePresenter;
+use ADT\Datagrid\Model\Queries\GridFilterQueryFactory;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
@@ -26,14 +27,13 @@ use ReflectionException;
 use TypeError;
 
 /**
- * @property-read DataGrid $grid
  * @method BasePresenter getPresenter()
  */
 abstract class BaseGrid extends Control
 {
 	abstract protected function getDataGridClass(): string;
 	abstract protected function getTranslator(): Translator;
-	abstract protected function getGridFilterQueryFactory();
+	abstract protected function getGridFilterQueryFactory(): GridFilterQueryFactory;
 	abstract protected function getQueryObjectDataSourceFactory(): IQueryObjectDataSourceFactory;
 	abstract protected function getSecurityUser(): User;
 	abstract protected function createQueryObject(): QueryObject;
@@ -43,6 +43,7 @@ abstract class BaseGrid extends Control
 	protected $onDelete;
 	protected static string $templateFile = DataGrid::TEMPLATE_DEFAULT;
 	protected bool $withoutIsActiveColumn = false;
+	private DataGrid $grid;
 
 	/**
 	 * @throws DatagridException
@@ -50,7 +51,7 @@ abstract class BaseGrid extends Control
 	final protected function createComponentGrid(): DataGrid
 	{
 		/** @var DataGrid $grid */
-		$grid = new ($this->getDataGridClass())(static::$templateFile);
+		$grid = $this->grid = new ($this->getDataGridClass())(static::$templateFile);
 		$grid->setTranslator($this->getTranslator());
 		$grid->setGridFilterQueryFactory($this->getGridFilterQueryFactory());
 		$grid->setOuterFilterRendering();
@@ -102,7 +103,7 @@ abstract class BaseGrid extends Control
 
 	public function getGrid(): DataGrid
 	{
-		return $this['grid'];
+		return $this->grid;
 	}
 
 	protected function initQueryObject($queryObject): void
@@ -151,6 +152,7 @@ abstract class BaseGrid extends Control
 
 	/**
 	 * @throws ReflectionException
+	 * @throws Exception
 	 */
 	public function handleSortRows(): void
 	{
@@ -261,5 +263,21 @@ abstract class BaseGrid extends Control
 
 		$grid->addColumnText('isActive', 'app.forms.global.isActive');
 		$grid->setColumnsOrder($order);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function handleDeleteGridFilter(): void
+	{
+		if (!$gridFilter = $this->getGridFilterQueryFactory()->create()->byId($this->getParameter('deleteId'))->fetchOneOrNull()) {
+			$this->error();
+		}
+
+		$this->getEntityManager()->remove($gridFilter);
+		$this->getEntityManager()->flush();
+		$this->getPresenter()->flashMessageSuccess('action.delete.yes');
+
+		$this->getGrid()->handleResetAdvancedFilter();
 	}
 }

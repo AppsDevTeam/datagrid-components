@@ -92,7 +92,7 @@
                                                         <a class="btn-edit" href="{$control->getParent()->link('editAdvancedFilter!', ['editId' => $gridFilter->getId()])}">
                                                             <i class="fa-solid fa-pen"></i>
                                                         </a>
-                                                        <a class="btn-edit" href="{plink removeGridFilter! 'removeId' => $gridFilter->getId()}">
+                                                        <a class="btn-edit" href="{$control->getParent()->link('deleteGridFilter!', ['deleteId' => $gridFilter->getId()])}">
                                                             <i class="fa-solid fa-trash"></i>
                                                         </a>
                                                     </div>
