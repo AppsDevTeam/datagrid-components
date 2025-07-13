@@ -99,7 +99,9 @@ trait GridFilterFormTrait
 	{
 		$defaults = [];
 		if (!$gridFilter) {
-			$defaults['value'] = $this->getGrid()['grid']->getParameters()['filter']['advancedSearch']['value'] ?? [];
+			$defaults['value'] = isset($this->getGrid()['grid']->getParameters()['filter']['advancedSearch'])
+				? Json::decode($this->getGrid()['grid']->getParameters()['filter']['advancedSearch'], forceArrays: true)
+				: [];
 		}
 
 		$filterList = [];
