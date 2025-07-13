@@ -11,6 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Nette\ComponentModel\IComponent;
 use Nette\Forms\Form;
+use Nette\Utils\Json;
 use Nette\Utils\JsonException;
 
 trait GridFilterFormTrait
@@ -98,7 +99,7 @@ trait GridFilterFormTrait
 	{
 		$defaults = [];
 		if (!$gridFilter) {
-			$defaults['value'] = $this->getGrid()['grid']->getParameters()['filter']['advancedSearch'] ?? [];
+			$defaults['value'] = $this->getGrid()['grid']->getParameters()['filter']['advancedSearch']['value'] ?? [];
 		}
 
 		$filterList = [];
@@ -311,10 +312,8 @@ trait GridFilterFormTrait
 			$filters = array_merge($filters, [DataGrid::SELECTED_GRID_FILTER_KEY => $gridFilter->getId()]);
 		} else {
 			unset($filters[DataGrid::SELECTED_GRID_FILTER_KEY]);
-			$filters = array_merge($filters, ['advancedSearch' => $inputs['value']]);
+			$filters = array_merge($filters, ['advancedSearch' => Json::encode($inputs['value'])]);
 		}
-
-		$inputs['save'] = $inputs['save'] === true ? 1 : 0;
 
 		/** @var DataGrid $grid */
 		$grid = $this->getGrid()['grid'];
@@ -333,7 +332,7 @@ trait GridFilterFormTrait
 		return $return;
 	}
 
-	protected function createEntity()
+	protected function createEntity(): GridFilter
 	{
 		/** @var GridFilter $entity */
 		$entity = new ($this->getEntityClass());

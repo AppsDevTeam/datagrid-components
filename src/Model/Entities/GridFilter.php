@@ -5,6 +5,7 @@ namespace ADT\Datagrid\Model\Entities;
 
 interface GridFilter
 {
+	public function getId(): string;
 	public function getGrid(): string;
 	public function setGrid(string $grid): static;
 	public function getName(): string;

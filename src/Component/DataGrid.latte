@@ -72,7 +72,7 @@
 											<i class="fa-solid fa-filter"></i>
 										</span>
 									</a>
-									<a n:href="resetGridFilter!" class="btn disable-filter-button">
+									<a n:href="resetAdvancedFilter!" class="btn disable-filter-button">
 										<i class="fa-solid fa-xmark"></i>
 									</a>
 
@@ -81,14 +81,15 @@
 
                                     <div style="display: none">
                                         {input $control['filter']['filter'][\ADT\Datagrid\Component\DataGrid::SELECTED_GRID_FILTER_KEY]}
+                                        {input $control['filter']['filter']['advancedSearch']}
                                     </div>
 									<ul class="dropdown-menu dropdown-menu-end">
 										{foreach $gridFilters as $gridFilter}
 											<li n:class="dropdown-item, $selectedGridFilter === $gridFilter ? 'selected'">
-												<a onclick="$(this).closest('form').find('[name=\'filter[advancedFilterId]\']').val({$gridFilter->getId()}); $(this).closest('form')[0].submit()">
+												<a onclick="$(this).closest('form').find('[name=\'filter[{= \ADT\Datagrid\Component\DataGrid::SELECTED_GRID_FILTER_KEY|noescape}]\']').val({$gridFilter->getId()}); $(this).closest('form')[0].submit()">
 													{$gridFilter->getName()}
 													<div class="filter-item-actions">
-                                                        <a class="btn-edit" href="{plink editGridFilter! 'editId' => $gridFilter->getId()}">
+                                                        <a class="btn-edit" href="{$control->getParent()->link('editAdvancedFilter!', ['editId' => $gridFilter->getId()])}">
                                                             <i class="fa-solid fa-pen"></i>
                                                         </a>
                                                         <a class="btn-edit" href="{plink removeGridFilter! 'removeId' => $gridFilter->getId()}">

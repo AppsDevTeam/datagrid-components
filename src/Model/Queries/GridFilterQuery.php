@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace ADT\Datagrid\Model\Queries;
 
-interface GridFilterQuery
+use ADT\DoctrineComponents\QueryObject\QueryObjectInterface;
+
+interface GridFilterQuery extends QueryObjectInterface
 {
 	public function byGrid(string $grid): static;
 	public function byName(string $name): static;

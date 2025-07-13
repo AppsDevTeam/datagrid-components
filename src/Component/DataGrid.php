@@ -6,17 +6,13 @@ namespace ADT\Datagrid\Component;
 
 use ADT\BackgroundQueue\BackgroundQueue;
 use ADT\Datagrid\Model\Export\Excel\ExportExcel;
+use ADT\Datagrid\Model\Queries\GridFilterQueryFactory;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
+use ADT\Forms\BootstrapFormRenderer;
 use ADT\QueryObjectDataSource\QueryObjectDataSource;
 use ADT\Datagrid\Model\Service\DataGridService;
 use ADT\Utils\Utils;
-use App\Model\Entities\GridFilter;
-use App\Model\Queries\Base\BaseQuery;
-use App\Model\Queries\Factories\GridFilterQueryFactory;
-use App\UI\Portal\Components\Forms\Base\FormRenderer;
-use App\UI\Portal\Components\Panels\GridFilterPanelControl\GridFilterPanelControlFactory;
-use App\UI\Portal\Components\SidePanels\SidePanelControl;
 use DateTimeInterface;
 use Nette;
 use Nette\Application\UI\Form;
@@ -31,16 +27,16 @@ use Contributte\Datagrid\Filter\FilterMultiSelect;
 use Contributte\Datagrid\Filter\FilterSelect;
 use Contributte\Datagrid\Row;
 use Contributte\Datagrid\Utils\ArraysHelper;
-use Throwable;
+use Nette\Utils\JsonException;
 
 class DataGrid extends \Contributte\Datagrid\Datagrid
 {
 	const string SELECTED_GRID_FILTER_KEY = 'advancedFilterId';
 
-	public const TEMPLATE_DEFAULT = 'DataGrid.latte';
-	public const TEMPLATE_PRETTY = 'DataGridPretty.latte';
+	public const string TEMPLATE_DEFAULT = 'DataGrid.latte';
+	public const string TEMPLATE_PRETTY = 'DataGridPretty.latte';
 
-	public const ACTION_NOT_DROPDOWN_ITEM = [
+	public const array ACTION_NOT_DROPDOWN_ITEM = [
 		'ajax datagrid-edit'
 	];
 
@@ -55,7 +51,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	protected bool $rememberState = false;
 	protected string $gridName;
 
-	public function getSessionData(?string $key = null, mixed $defaultValue = null): mixed
+	public function getSessionData(?string $key = null, mixed $defaultValue = null): array
 	{
 		return [];
 	}
@@ -99,7 +95,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	public function createComponentFilter(): Form
 	{
 		$form = parent::createComponentFilter();
-		$form->setRenderer(new FormRenderer($form));
+		$form->setRenderer(new BootstrapFormRenderer($form));
 		return $form;
 	}
 
@@ -117,6 +113,9 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $component;
 	}
 
+	/**
+	 * @throws DatagridException
+	 */
 	public function render(): void
 	{
 		$selectedGridFilter = null;
@@ -342,50 +341,24 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	{
 		$filters = $filter ? [$filter => ($this->filter[$filter] ?? null)] : $this->filter;
 
-		if (isset($filters['search'])) {
-			$filters['search'] = null;
-		}
-
-		if (isset($filters['advancedSearch']) && $filters['advancedSearch'] === '[]') {
-			$filters['advancedSearch'] = null;
-		}
-
 		$is_filter = ArraysHelper::testTruthy($filters);
 
 		return $is_filter || $this->forceFilterActive;
 	}
 
-
-	public function handleResetFilter(): void
+	public function handleResetAdvancedFilter(): void
 	{
 		$searchFilter = $this->filter['search'] ?? null;
-		$advancedSearchFilter = $this->filter['advancedSearch'] ?? null;
-		parent::handleResetFilter();
-
+		$this->handleResetFilter();
 		if ($searchFilter) {
 			$this->filter['search'] = $searchFilter;
-			$this->filter['advancedSearch'] = $advancedSearchFilter;
 		}
 	}
 
-	public function handleResetGridFilter(): void
-	{
-		$this->handleResetFilter();
-		$this->redirect('this');
-	}
-
 	/**
-	 * Add filter for ajax entity select
-	 * @param string        $key
-	 * @param string        $name
-	 * @param string        $entityName
-	 * @param string        $prompt
-	 * @param array|string  $columns
-	 * @param callable|NULL $onAddToForm Callback called when component is added to the container with component as argument
-	 * @return \App\Components\Grids\Base\FilterAjaxSelect
-	 * @throws DataGridException
+	 * @throws DatagridException
 	 */
-	public function addFilterAjaxSelect($key, $name, $entityName, $prompt, $columns = NULL, $onAddToForm = NULL)
+	public function addFilterAjaxSelect(string $key, string $name, string $entityName, string $prompt, array|string|null $columns = null, ?callable $onAddToForm = null): FilterAjaxSelect
 	{
 		$columns = NULL === $columns ? [$key] : (is_string($columns) ? [$columns] : $columns);
 
@@ -402,7 +375,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 	public function addAdvancedFilteredSearch(): void
 	{
-		$this->addFilterSelect(static::SELECTED_GRID_FILTER_KEY, '', $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetchPairs())
+		$this->addFilterSelect(static::SELECTED_GRID_FILTER_KEY, '', $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetchPairs('name', 'id'))
 			->setPrompt('---')
 			->setCondition(function (QueryObject $query, $value) {
 				$this->applyAdvancedFilter($query, $this->gridFilterQueryFactory->create()->byGrid($this->getParent()->getName())->byId($value)->fetchOne()->getValue());
@@ -413,10 +386,14 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 			});
 	}
 
-	public function applyAdvancedFilter(QueryObject $query, array $value)
+	/**
+	 * @throws JsonException
+	 * @throws DatagridException
+	 */
+	public function applyAdvancedFilter(QueryObject $query, string $value): void
 	{
 		if ($value) {
-			$advanceSearch = $value;
+			$advanceSearch = Json::decode($value, forceArrays: true);
 
 			$seenValues = [];
 			foreach ($advanceSearch as $key => $item) {
@@ -494,7 +471,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $this;
 	}
 
-	public function setGridFilterQuery(GridFilterQueryFactory $queryFactory): self
+	public function setGridFilterQueryFactory(GridFilterQueryFactory $queryFactory): self
 	{
 		$this->gridFilterQueryFactory = $queryFactory;
 		return $this;
