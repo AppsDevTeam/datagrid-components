@@ -382,7 +382,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 			});
 		$this->addFilterText('advancedSearch', '')
 			->setCondition(function (QueryObject $query, $value) {
-				$this->applyAdvancedFilter($query, $value);
+				$this->applyAdvancedFilter($query, Json::decode($value, forceArrays: true));
 			});
 	}
 
@@ -390,78 +390,74 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	 * @throws JsonException
 	 * @throws DatagridException
 	 */
-	public function applyAdvancedFilter(QueryObject $query, string $value): void
+	public function applyAdvancedFilter(QueryObject $query, array $advanceSearch): void
 	{
-		if ($value) {
-			$advanceSearch = Json::decode($value, forceArrays: true);
+		$seenValues = [];
+		foreach ($advanceSearch as $key => $item) {
+			$fieldValue = $item['value'];
 
-			$seenValues = [];
-			foreach ($advanceSearch as $key => $item) {
-				$fieldValue = $item['value'];
-
-				if (in_array($fieldValue, $seenValues)) {
-					// Odstraníme duplicity
-					unset($advanceSearch[$key]);
-				} else {
-					$seenValues[] = $fieldValue;
-				}
+			if (in_array($fieldValue, $seenValues)) {
+				// Odstraníme duplicity
+				unset($advanceSearch[$key]);
+			} else {
+				$seenValues[] = $fieldValue;
 			}
-			$advanceSearch = array_values($advanceSearch);
+		}
+		$advanceSearch = array_values($advanceSearch);
 
-			foreach ($advanceSearch as $searchFilter) {
-				$operatorMap = [
-					'eq' => QueryObjectByMode::EQUALS,
-					'ne' => QueryObjectByMode::NOT_EQUALS,
-					'sw' => QueryObjectByMode::STARTS_WITH,
-					'ct' => QueryObjectByMode::CONTAINS,
-					'nct' => QueryObjectByMode::NOT_CONTAINS,
-					'fw' => QueryObjectByMode::ENDS_WITH,
-					'in' => QueryObjectByMode::IN_ARRAY,
-					'null' => QueryObjectByMode::IS_NULL,
-					'nn' => QueryObjectByMode::IS_NOT_NULL,
-					'gt' => QueryObjectByMode::GREATER,
-					'lt' => QueryObjectByMode::LESS,
-					'bw' => QueryObjectByMode::BETWEEN,
-					'nbw' => QueryObjectByMode::NOT_BETWEEN,
+		foreach ($advanceSearch as $searchFilter) {
+			$operatorMap = [
+				'eq' => QueryObjectByMode::EQUALS,
+				'ne' => QueryObjectByMode::NOT_EQUALS,
+				'sw' => QueryObjectByMode::STARTS_WITH,
+				'ct' => QueryObjectByMode::CONTAINS,
+				'nct' => QueryObjectByMode::NOT_CONTAINS,
+				'fw' => QueryObjectByMode::ENDS_WITH,
+				'in' => QueryObjectByMode::IN_ARRAY,
+				'null' => QueryObjectByMode::IS_NULL,
+				'nn' => QueryObjectByMode::IS_NOT_NULL,
+				'gt' => QueryObjectByMode::GREATER,
+				'lt' => QueryObjectByMode::LESS,
+				'bw' => QueryObjectByMode::BETWEEN,
+				'nbw' => QueryObjectByMode::NOT_BETWEEN,
+			];
+
+			if (!empty($searchFilter['value2'])) {
+				$value = [
+					Utils::getDateTimeFromArray($searchFilter['value']) ?: $searchFilter['value'],
+					Utils::getDateTimeFromArray($searchFilter['value2']) ?: $searchFilter['value2'],
 				];
+			} else {
+				$value = Utils::getDateTimeFromArray($searchFilter['value']) ?: $searchFilter['value'];
 
-				if (!empty($searchFilter['value2'])) {
-					$value = [
-						Utils::getDateTimeFromArray($searchFilter['value']) ?: $searchFilter['value'],
-						Utils::getDateTimeFromArray($searchFilter['value2']) ?: $searchFilter['value2'],
-					];
-				} else {
-					$value = Utils::getDateTimeFromArray($searchFilter['value']) ?: $searchFilter['value'];
-
-					if ($value instanceof DateTimeInterface) {
-						$value = $value->format('Y-m-d H:i:s');
-					}
-
-					if ($operatorMap[$searchFilter['operator']] === QueryObjectByMode::IN_ARRAY && !is_array($value)) {
-						$delimiter = $searchFilter['delimiter'] ?? ',';
-						$value = explode($delimiter, $value);
-					}
+				if ($value instanceof DateTimeInterface) {
+					$value = $value->format('Y-m-d H:i:s');
 				}
 
-				if (
-					Utils::realEmpty($value)
-					&& !in_array($operatorMap[$searchFilter['operator']], [QueryObjectByMode::IS_NULL, QueryObjectByMode::IS_NOT_NULL])
-				) {
-					continue;
+				if ($operatorMap[$searchFilter['operator']] === QueryObjectByMode::IN_ARRAY && !is_array($value)) {
+					$delimiter = $searchFilter['delimiter'] ?? ',';
+					$value = explode($delimiter, $value);
 				}
-
-				$label = $searchFilter['label'];
-
-				// without this line, I will get Typed property Contributte\Datagrid\Filter\Filter::$value must not be accessed before initialization
-				$this->getFilter($label)->setValue($value);
-				$column = array_keys($this->getFilter($label)->getCondition());
-
-				$query->by(
-					(!empty($column) ? $column : $label),
-					$value,
-					$operatorMap[$searchFilter['operator']] ?? QueryObjectByMode::EQUALS
-				);
 			}
+
+			if (
+				Utils::realEmpty($value)
+				&& !in_array($operatorMap[$searchFilter['operator']], [QueryObjectByMode::IS_NULL, QueryObjectByMode::IS_NOT_NULL])
+			) {
+				continue;
+			}
+
+			$label = $searchFilter['label'];
+
+			// without this line, I will get Typed property Contributte\Datagrid\Filter\Filter::$value must not be accessed before initialization
+			$this->getFilter($label)->setValue($value);
+			$column = array_keys($this->getFilter($label)->getCondition());
+
+			$query->by(
+				(!empty($column) ? $column : $label),
+				$value,
+				$operatorMap[$searchFilter['operator']] ?? QueryObjectByMode::EQUALS
+			);
 		}
 	}
 
