@@ -133,7 +133,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->template->gridHtmlDataAttributes = $this->htmlDataAttributes;
 		$this->template->showTableFoot = $this->showTableFoot;
 		$this->template->toolbarButons = $this->toolbarButtons;
-		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid($this->getParent()->getName())->fetch();
+		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetch();
 
 		parent::render();
 	}
@@ -378,7 +378,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->addFilterSelect(static::SELECTED_GRID_FILTER_KEY, '', $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetchPairs('name', 'id'))
 			->setPrompt('---')
 			->setCondition(function (QueryObject $query, $value) {
-				$this->applyAdvancedFilter($query, $this->gridFilterQueryFactory->create()->byGrid($this->getParent()->getName())->byId($value)->fetchOne()->getValue());
+				$this->applyAdvancedFilter($query, $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->byId($value)->fetchOne()->getValue());
 			});
 		$this->addFilterText('advancedSearch', '')
 			->setCondition(function (QueryObject $query, $value) {

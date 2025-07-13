@@ -77,7 +77,7 @@ abstract class BaseGrid extends Control
 				->setClass('ajax datagrid-delete')
 				->setConfirmation(new StringConfirmation($this->getTranslator()->translate('action.delete.confirm')));
 		}
-		$grid->setGridName($this->getName());
+		$grid->setGridName($this->getPresenter()->getName() . '-' . $this->getName());
 		$this->initGrid($grid);
 		$this->addIsActive($grid);
 

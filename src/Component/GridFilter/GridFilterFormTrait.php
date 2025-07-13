@@ -9,6 +9,7 @@ use ADT\Datagrid\Model\Queries\GridFilterQuery;
 use ADT\Forms\StaticContainer;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
+use Nette\Application\UI\Presenter;
 use Nette\ComponentModel\IComponent;
 use Nette\Forms\Form;
 use Nette\Utils\Json;
@@ -21,6 +22,7 @@ trait GridFilterFormTrait
 	abstract protected function getGridFilterQuery(): GridFilterQuery;
 	abstract public function lookup(?string $type, bool $throw = true): ?IComponent;
 	abstract public function redrawControl(?string $snippet = null, bool $redraw = true): void;
+	abstract public function getPresenter(): ?Presenter;
 
 	const array TRANSLATIONS = [// TODO překlady
 		'sEqual' => 'je rovno',
@@ -354,6 +356,6 @@ trait GridFilterFormTrait
 
 	protected function getGridName(): string
 	{
-		return $this->getGrid()->getName();
+		return $this->getPresenter()->getName() . '-' . $this->getGrid()->getName();
 	}
 }
