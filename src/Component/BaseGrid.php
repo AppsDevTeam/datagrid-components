@@ -43,7 +43,6 @@ abstract class BaseGrid extends Control
 	protected $onDelete;
 	protected static string $templateFile = DataGrid::TEMPLATE_DEFAULT;
 	protected bool $withoutIsActiveColumn = false;
-	private DataGrid $grid;
 
 	/**
 	 * @throws DatagridException
@@ -51,7 +50,7 @@ abstract class BaseGrid extends Control
 	final protected function createComponentGrid(): DataGrid
 	{
 		/** @var DataGrid $grid */
-		$grid = $this->grid = new ($this->getDataGridClass())(static::$templateFile);
+		$grid = new ($this->getDataGridClass())(static::$templateFile);
 		$grid->setTranslator($this->getTranslator());
 		$grid->setGridFilterQueryFactory($this->getGridFilterQueryFactory());
 		$grid->setOuterFilterRendering();
@@ -103,7 +102,7 @@ abstract class BaseGrid extends Control
 
 	public function getGrid(): DataGrid
 	{
-		return $this->grid;
+		return $this['grid'];
 	}
 
 	protected function initQueryObject($queryObject): void
@@ -207,7 +206,7 @@ abstract class BaseGrid extends Control
 			$this->getEntityManager()->remove($entity);
 			$this->getEntityManager()->flush();
 			$this->getPresenter()->flashMessageSuccess('action.delete.yes');
-			$this->grid->redrawControl();
+			$this->getGrid()->redrawControl();
 		} else {
 			$this->getPresenter()->flashMessageError('app.grids.flashes.cantDelete');
 			$this->getPresenter()->redrawControl('flashes');
