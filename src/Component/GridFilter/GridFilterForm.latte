@@ -1,6 +1,10 @@
 {form form}
 	{include errors}
 
+	{ifset $form['company']}
+		{formPair 'company'}
+	{/ifset}
+
 	<div n:snippet="filterList" class="row row-filter">
 		{var $form = $control['form']}
 		{var ADT\Forms\DynamicContainer $valueDynamicContainer = $form['value']}
@@ -87,19 +91,19 @@
 {/define}
 
 <script>
-    $(document).ready(function() {
-        const $form = $(document).find(`#{$form->getElementPrototype()->id|noescape}`);
+	$(document).ready(function() {
+		const $form = $(document).find(`#{$form->getElementPrototype()->id|noescape}`);
 
-        $form.find('.row-filter').formReplicator({
-            template: $.parseHTML(`{$stockContainer|trim|noescape}`)[0].outerHTML,
-            addStaticButton: $form.find('[data-adt-replicator-add-filter]'),
-            addStaticButtonShowAlways: true,
-        });
+		$form.find('.row-filter').formReplicator({
+			template: $.parseHTML(`{$stockContainer|trim|noescape}`)[0].outerHTML,
+			addStaticButton: $form.find('[data-adt-replicator-add-filter]'),
+			addStaticButtonShowAlways: true,
+		});
 
-        $form.find('.row-filter').click((e) => {
-            $form.find('.auto-submit').change(() => {
-                $form.find('button[name="autoSubmit"]').click();
-            })
+		$form.find('.row-filter').click((e) => {
+			$form.find('.auto-submit').change(() => {
+				$form.find('button[name="autoSubmit"]').click();
+			})
 		})
-    });
+	});
 </script>
