@@ -143,6 +143,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	 */
 	public function handleExport($id): void
 	{
+		ini_set('memory_limit', '1G');
 		$dataSource = $this->dataModel->getDataSource();
 		if ($dataSource instanceof QueryObjectDataSource) {
 			$this->dataModel->onAfterFilter[] = function() use ($dataSource, $id) {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\Datagrid\Component;
 
 use ADT\Application\BasePresenter;
+use ADT\BackgroundQueue\BackgroundQueue;
 use ADT\Datagrid\Model\Queries\GridFilterQueryFactory;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
@@ -38,6 +39,7 @@ abstract class BaseGrid extends Control
 	abstract protected function getSecurityUser(): User;
 	abstract protected function createQueryObject(): QueryObject;
 	abstract protected function getEntityManager(): EntityManager;
+	abstract protected function getBackgroundQueue(): BackgroundQueue;
 
 	/** @var callable */
 	protected $onDelete;
@@ -54,6 +56,7 @@ abstract class BaseGrid extends Control
 		$grid->setTranslator($this->getTranslator());
 		$grid->setGridFilterQueryFactory($this->getGridFilterQueryFactory());
 		$grid->setOuterFilterRendering();
+		$grid->setBackgroundQueue($this->getBackgroundQueue());
 
 		$queryObject = $this->createQueryObject();
 		$this->initQueryObject($queryObject);
