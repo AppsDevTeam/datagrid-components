@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\Datagrid\Component;
 
 use ADT\BackgroundQueue\BackgroundQueue;
+use ADT\Datagrid\Model\Entities\GridExport;
 use ADT\Datagrid\Model\Export\Excel\ExportExcel;
 use ADT\Datagrid\Model\Queries\GridFilterQueryFactory;
 use ADT\DoctrineComponents\EntityManager;
@@ -14,9 +15,7 @@ use ADT\Forms\BootstrapFormRenderer;
 use ADT\QueryObjectDataSource\QueryObjectDataSource;
 use ADT\Datagrid\Model\Service\DataGridService;
 use ADT\Utils\Utils;
-use App\Model\Entities\GridExport;
 use DateTimeInterface;
-use Doctrine\ORM\EntityManagerInterface;
 use Nette;
 use Nette\Application\Responses\FileResponse;
 use Nette\Application\UI\Form;
@@ -29,9 +28,7 @@ use Contributte\Datagrid\Export\ExportCsv;
 use Contributte\Datagrid\Filter\Filter;
 use Contributte\Datagrid\Filter\FilterMultiSelect;
 use Contributte\Datagrid\Filter\FilterSelect;
-use Contributte\Datagrid\Row;
 use Contributte\Datagrid\Utils\ArraysHelper;
-use Nette\Utils\JsonException;
 
 class DataGrid extends \Contributte\Datagrid\Datagrid
 {
@@ -70,16 +67,6 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	{
 		$this->actionsToDropdown = $actionsToDropdown;
 		return $this;
-	}
-
-	public function __construct(
-		string $templateType = self::TEMPLATE_DEFAULT,
-		?Nette\ComponentModel\IContainer $parent = null,
-		?string $name = null,
-	)
-	{
-		$this->templateType = $templateType;
-		parent::__construct($parent, $name);
 	}
 
 	public function getOriginalTemplateFile(): string
@@ -174,8 +161,8 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 					];
 				}, $this->columns);
 
-				/** @var \ADT\Datagrid\Model\Entities\GridExport $gridExport */
-				$gridExport = new ($this->em->findEntityClassByInterface(\ADT\Datagrid\Model\Entities\GridExport::class));
+				/** @var GridExport $gridExport */
+				$gridExport = new ($this->em->findEntityClassByInterface(GridExport::class));
 				$gridExport->setColumns($columns);
 				$gridExport->setValue(array_values($dataSource->getQueryObject()->fetchField('id')));
 				$gridExport->setGrid(DatagridService::getGridName($this));
@@ -384,7 +371,6 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	}
 
 	/**
-	 * @throws JsonException
 	 * @throws DatagridException
 	 */
 	public function applyAdvancedFilter(QueryObject $query, array $advanceSearch): void

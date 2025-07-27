@@ -47,7 +47,6 @@ trait BaseGridTrait
 	abstract protected function getEntityManager(): EntityManager;
 	abstract protected function getBackgroundQueue(): BackgroundQueue;
 	abstract public function getParameter(string $name): mixed;
-	abstract public function initGrid(DataGrid $grid): void;
 
 	#[Autowire]
 	protected DatagridService $datagridService;
@@ -59,11 +58,16 @@ trait BaseGridTrait
 
 	/**
 	 * @throws DatagridException
+	 * @throws Exception
 	 */
 	final protected function createComponentGrid(): DataGrid
 	{
+		if (!method_exists($this, 'initGrid')) {
+			throw new Exception('Define initGrid method!');
+		}
+
 		/** @var DataGrid $grid */
-		$grid = new ($this->getDataGridClass())(static::$templateFile);
+		$grid = new ($this->getDataGridClass())();
 		$grid->setTranslator($this->getTranslator());
 		$grid->setEntityManager($this->getEntityManager());
 		$grid->setDatagridService($this->datagridService);

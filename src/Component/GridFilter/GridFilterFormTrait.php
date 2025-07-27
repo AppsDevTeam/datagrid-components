@@ -102,13 +102,13 @@ trait GridFilterFormTrait
 	{
 		$defaults = [];
 		if (!$gridFilter) {
-			$defaults['value'] = !empty($this->getGrid()['grid']->getParameters()['filter']['advancedSearch'])
+			$defaults['value'] = !empty($this->getGrid()->getGrid()->getParameters()['filter']['advancedSearch'])
 				? Json::decode($this->getGrid()['grid']->getParameters()['filter']['advancedSearch'], forceArrays: true)
 				: [];
 		}
 
 		$filterList = [];
-		foreach ($this->getGrid()['grid']->getGridFilterFields() as $item) {
+		foreach ($this->getGrid()->getGrid()->getGridFilterFields() as $item) {
 			$filterList[$item['id']] = $item;
 		}
 
@@ -311,7 +311,7 @@ trait GridFilterFormTrait
 	 */
 	public function processForm(?GridFilter $gridFilter, array $inputs): void
 	{
-		$filters = $this->getGrid()['grid']->getParameters()['filter'];
+		$filters = $this->getGrid()->getGrid()->getParameters()['filter'];
 		if ($inputs['save']) {
 			if (!$gridFilter) {
 				/** @var GridFilter $gridFilter */
@@ -332,8 +332,7 @@ trait GridFilterFormTrait
 			$filters = array_merge($filters, ['advancedSearch' => Json::encode($inputs['value'])]);
 		}
 
-		/** @var DataGrid $grid */
-		$grid = $this->getGrid()['grid'];
+		$grid = $this->getGrid()->getGrid();
 		$grid->setFilter($filters);
 		$grid->handleRefreshState();
 	}
