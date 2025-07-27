@@ -53,7 +53,6 @@ trait BaseGridTrait
 
 	/** @var callable */
 	protected $onDelete;
-	protected static string $templateFile = DataGrid::TEMPLATE_DEFAULT;
 	protected bool $withoutIsActiveColumn = false;
 
 	/**

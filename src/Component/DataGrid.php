@@ -35,7 +35,6 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	const string SELECTED_GRID_FILTER_KEY = 'advancedFilterId';
 
 	public const string TEMPLATE_DEFAULT = 'DataGrid.latte';
-	public const string TEMPLATE_PRETTY = 'DataGridPretty.latte';
 
 	public const array ACTION_NOT_DROPDOWN_ITEM = [
 		'ajax datagrid-edit'
@@ -46,7 +45,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	protected EntityManager $em;
 	protected DatagridService $datagridService;
 	public bool $strictSessionFilterValues = false;
-	protected string $templateType;
+	protected string $templateType = self::TEMPLATE_DEFAULT;
 	protected array $classes = [];
 	protected array $htmlDataAttributes = [];
 	protected bool $actionsToDropdown = true;
