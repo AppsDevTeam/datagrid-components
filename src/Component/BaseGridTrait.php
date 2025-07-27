@@ -24,6 +24,7 @@ use Kdyby\Autowired\AutowireProperties;
 use Nette\Application\AbortException;
 use Nette\Application\BadRequestException;
 use Nette\Application\UI\InvalidLinkException;
+use Nette\Application\UI\Presenter;
 use Nette\Localization\Translator;
 use Nette\Security\User;
 use ReflectionClass;
@@ -55,16 +56,26 @@ trait BaseGridTrait
 	protected $onDelete;
 	protected bool $withoutIsActiveColumn = false;
 
+	public function __construct()
+	{
+		$this->monitor(Presenter::class, function() {
+			$grid = $this->getGrid();
+
+			if (!method_exists($this, 'initGrid')) {
+				throw new Exception('Define initGrid method!');
+			}
+
+			$this->initGrid($grid);
+			$this->addIsActive($grid);
+		});
+	}
+
 	/**
 	 * @throws DatagridException
 	 * @throws Exception
 	 */
 	final protected function createComponentGrid(): DataGrid
 	{
-		if (!method_exists($this, 'initGrid')) {
-			throw new Exception('Define initGrid method!');
-		}
-
 		/** @var DataGrid $grid */
 		$grid = new ($this->getDataGridClass())();
 		$grid->setTranslator($this->getTranslator());
@@ -94,8 +105,7 @@ trait BaseGridTrait
 				->setClass('ajax datagrid-delete')
 				->setConfirmation(new StringConfirmation($this->getTranslator()->translate('action.delete.confirm')));
 		}
-		$this->initGrid($grid);
-		$this->addIsActive($grid);
+
 
 		if ($grid->isSortable()) {
 			$grid->setSortableHandler($this->getName() . '-sortRows!');
