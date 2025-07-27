@@ -7,14 +7,18 @@ namespace ADT\Datagrid\Component;
 use ADT\BackgroundQueue\BackgroundQueue;
 use ADT\Datagrid\Model\Export\Excel\ExportExcel;
 use ADT\Datagrid\Model\Queries\GridFilterQueryFactory;
+use ADT\DoctrineComponents\EntityManager;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\Forms\BootstrapFormRenderer;
 use ADT\QueryObjectDataSource\QueryObjectDataSource;
 use ADT\Datagrid\Model\Service\DataGridService;
 use ADT\Utils\Utils;
+use App\Model\Entities\GridExport;
 use DateTimeInterface;
+use Doctrine\ORM\EntityManagerInterface;
 use Nette;
+use Nette\Application\Responses\FileResponse;
 use Nette\Application\UI\Form;
 use Nette\Utils\DateTime;
 use Nette\Utils\Json;
@@ -42,6 +46,8 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 	protected BackgroundQueue $backgroundQueue;
 	protected GridFilterQueryFactory $gridFilterQueryFactory;
+	protected EntityManager $em;
+	protected DatagridService $datagridService;
 	public bool $strictSessionFilterValues = false;
 	protected string $templateType;
 	protected array $classes = [];
@@ -143,37 +149,12 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	 */
 	public function handleExport($id): void
 	{
-		ini_set('memory_limit', '1G');
-		$dataSource = $this->dataModel->getDataSource();
-		if ($dataSource instanceof QueryObjectDataSource) {
-			$this->dataModel->onAfterFilter[] = function() use ($dataSource, $id) {
-				if ($dataSource->getCount() > 10000) {
-					$columns = [];
-					$ids = $dataSource->getQueryObject()->fetchField('id');
-
-					foreach ($this->columns as $key => $column) {
-						$columns[$key] = [
-							'name' => $column->getName(),
-							'column' => $column->getColumn(),
-						];
-					}
-
-					$this->backgroundQueue->publish('dataGridExport', [
-						'ids' => array_values($ids),
-						'columns' => $columns,
-						'entityClass' => $dataSource->getQueryObject()->getEntityClass(),
-						'userMail' => $this->getPresenter()->getUser()->getIdentity()->getEmail(),
-						'downloadLink' => $this->getPresenter()->link('//:Admin:Download:file', DataGridService::FILE_ID_VARIABLE),
-					]);
-
-					$this->getPresenter()->flashMessageInfo('Export will be processed in background and sent to your email when finished.');
-					$this->redirect('this');
-				}
-			};
-		}
-
 		if (!isset($this->exports[$id])) {
 			throw new Nette\Application\ForbiddenRequestException;
+		}
+
+		if ($this->dataModel === null) {
+			throw new DataGridException('You have to set a data source first.');
 		}
 
 		if ($this->columnsExportOrder !== []) {
@@ -181,6 +162,43 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		}
 
 		$export = $this->exports[$id];
+
+		ini_set('memory_limit', '1G');
+
+		$dataSource = $this->dataModel->getDataSource();
+		if ($dataSource instanceof QueryObjectDataSource) {
+			$this->dataModel->onAfterFilter[] = function() use ($dataSource, $export) {
+				$columns = [];
+				foreach ($this->columns as $key => $column) {
+					$columns[$key] = [
+						'name' => $column->getName(),
+						'column' => $column->getColumn(),
+					];
+				}
+
+				/** @var \ADT\Datagrid\Model\Entities\GridExport $gridExport */
+				$gridExport = new ($this->em->findEntityByInterface(\ADT\Datagrid\Model\Entities\GridExport::class));
+				$gridExport->setColumns($columns);
+				$gridExport->setValue(array_values($dataSource->getQueryObject()->fetchField('id')));
+				$gridExport->setGrid(DatagridService::getGridName($this));
+				$gridExport->setEntityClass($this->getDataSource()->getQueryObject()->getEntityClass());
+				$gridExport->setExportClass(get_class($export));
+				$gridExport->setEmail($this->getPresenter()->getUser()->getIdentity()->getEmail());
+				$this->em->persist($gridExport);
+
+				if ($dataSource->getCount() > 1000) {
+					$gridExport->setInBackground(true);
+					$this->em->flush();
+
+					$this->getPresenter()->flashMessageInfo('Export will be processed in background and sent to your email when finished.');
+					$this->redirect('this');
+				} else {
+					$this->datagridService->saveFile($gridExport, $dataSource->getData());
+
+					$this->getPresenter()->sendResponse(new FileResponse($gridExport->getFile()->getPath(), $gridExport->getFile()->getOriginalName()));
+				}
+			};
+		}
 
 		/**
 		 * Invoke possible events
@@ -195,31 +213,11 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 			$filter = [];
 		}
 
-		if ($this->dataModel === null) {
-			throw new DataGridException('You have to set a data source first.');
-		}
-
-		$rows = [];
-
-		$items = $this->dataModel->filterData(
+		$this->dataModel->filterData(
 			null,
 			$this->createSorting($sort, $this->sortCallback),
 			$filter
 		);
-
-		foreach ($items as $item) {
-			$rows[] = new Row($this, $item, $this->getPrimaryKey());
-		}
-
-		if ($export instanceof ExportCsv || $export instanceof ExportExcel) {
-			$export->invoke($rows);
-		} else {
-			$export->invoke($items);
-		}
-
-		if ($export->isAjax()) {
-			$this->reload();
-		}
 	}
 
 	/**
@@ -462,21 +460,28 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		}
 	}
 
-	public function setBackgroundQueue(BackgroundQueue $backgroundQueue): self
+	public function setBackgroundQueue(BackgroundQueue $backgroundQueue): static
 	{
 		$this->backgroundQueue = $backgroundQueue;
 		return $this;
 	}
 
-	public function setGridFilterQueryFactory(GridFilterQueryFactory $queryFactory): self
+	public function setGridFilterQueryFactory(GridFilterQueryFactory $queryFactory): static
 	{
 		$this->gridFilterQueryFactory = $queryFactory;
 		return $this;
 	}
 
-	public function setGridName(string $gridName)
+	public function setGridName(string $gridName): static
 	{
 		$this->gridName = $gridName;
+		return $this;
+	}
+
+	public function setDatagridService(DataGridService $datagridService): static
+	{
+		$this->datagridService = $datagridService;
+		return $this;
 	}
 
 	public function reload(array $snippets = []): void
@@ -533,5 +538,11 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		}
 
 		return $fields;
+	}
+
+	public function setEntityManager(EntityManager $em): static
+	{
+		$this->em = $em;
+		return $this;
 	}
 }

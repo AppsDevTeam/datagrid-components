@@ -6,6 +6,8 @@ use ADT\Datagrid\Component\BaseGrid;
 use ADT\Datagrid\Component\DataGrid;
 use ADT\Datagrid\Model\Entities\GridFilter;
 use ADT\Datagrid\Model\Queries\GridFilterQuery;
+use ADT\Datagrid\Model\Service\DatagridService;
+use ADT\DoctrineComponents\EntityManager;
 use ADT\Forms\StaticContainer;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -17,8 +19,7 @@ use Nette\Utils\JsonException;
 
 trait GridFilterFormTrait
 {
-	abstract protected function getEntityManager(): EntityManagerInterface;
-	abstract protected function getEntityClass(): ?string;
+	abstract protected function getEntityManager(): EntityManager;
 	abstract protected function getGridFilterQuery(): GridFilterQuery;
 	abstract public function lookup(?string $type, bool $throw = true): ?IComponent;
 	abstract public function redrawControl(?string $snippet = null, bool $redraw = true): void;
@@ -101,7 +102,7 @@ trait GridFilterFormTrait
 	{
 		$defaults = [];
 		if (!$gridFilter) {
-			$defaults['value'] = isset($this->getGrid()['grid']->getParameters()['filter']['advancedSearch'])
+			$defaults['value'] = !empty($this->getGrid()['grid']->getParameters()['filter']['advancedSearch'])
 				? Json::decode($this->getGrid()['grid']->getParameters()['filter']['advancedSearch'], forceArrays: true)
 				: [];
 		}
@@ -283,7 +284,7 @@ trait GridFilterFormTrait
 	{
 		$gridFilterQuery = $this->getGridFilterQuery()
 			->byName($inputs['name'])
-			->byGrid($this->getGridName());
+			->byGrid(DatagridService::getGridName($this));
 
 		if ($gridFilter) {
 			$gridFilterQuery->byIdNot($gridFilter->getId());
@@ -298,6 +299,11 @@ trait GridFilterFormTrait
 		}
 	}
 
+	protected function createEntity(): ?GridFilter
+	{
+		return null;
+	}
+
 	/**
 	 * @throws JsonException
 	 */
@@ -306,10 +312,13 @@ trait GridFilterFormTrait
 		$filters = $this->getGrid()['grid']->getParameters()['filter'];
 		if ($inputs['save']) {
 			if (!$gridFilter) {
+				/** @var GridFilter $gridFilter */
 				$gridFilter = new ($this->getEntityClass());
-				$gridFilter->setGrid($this->getGridName());
+				$this->initEntity($gridFilter);
+				$gridFilter->setGrid(DatagridService::getGridName($this));
 				$gridFilter->setValue($inputs['value']);
 				$gridFilter->setName($inputs['name']);
+				$this->em->persist($gridFilter);
 			}
 			$this->getEntityManager()->flush();
 			unset($filters['advancedSearch']);
@@ -336,14 +345,6 @@ trait GridFilterFormTrait
 		return $return;
 	}
 
-	protected function createEntity(): GridFilter
-	{
-		/** @var GridFilter $entity */
-		$entity = new ($this->getEntityClass());
-
-		return $entity->setGrid($this->getGridName());
-	}
-
 	protected function getTemplateFilename(): ?string
 	{
 		return __DIR__ . '/GridFilterForm.latte';
@@ -354,8 +355,8 @@ trait GridFilterFormTrait
 		return $this->lookup(BaseGrid::class);
 	}
 
-	protected function getGridName(): string
+	protected function getEntityClass(): string
 	{
-		return $this->getPresenter()->getName() . '-' . $this->getGrid()->getName();
+		return $this->em->findEntityByInterface(GridFilter::class);
 	}
 }
