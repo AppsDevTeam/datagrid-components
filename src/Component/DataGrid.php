@@ -13,7 +13,7 @@ use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\Forms\BootstrapFormRenderer;
 use ADT\QueryObjectDataSource\QueryObjectDataSource;
-use ADT\Datagrid\Model\Service\DataGridService;
+use ADT\Datagrid\Model\Service\DatagridService;
 use ADT\Utils\Utils;
 use DateTimeInterface;
 use Nette;
@@ -51,6 +51,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	protected bool $actionsToDropdown = true;
 	protected bool $showTableFoot = true;
 	protected bool $rememberState = false;
+	protected string $gridName;
 
 	public function getSessionData(?string $key = null, mixed $defaultValue = null): array
 	{
@@ -124,7 +125,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->template->gridHtmlDataAttributes = $this->htmlDataAttributes;
 		$this->template->showTableFoot = $this->showTableFoot;
 		$this->template->toolbarButons = $this->toolbarButtons;
-		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid(DataGridService::getGridName($this))->fetch();
+		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetch();
 
 		parent::render();
 	}
@@ -165,10 +166,10 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 				$gridExport = new ($this->em->findEntityClassByInterface(GridExport::class));
 				$gridExport->setColumns($columns);
 				$gridExport->setValue(array_values($dataSource->getQueryObject()->fetchField('id')));
-				$gridExport->setGrid(DatagridService::getGridName($this));
+				$gridExport->setGrid($this->gridName);
 				$gridExport->setEntityClass($this->getDataSource()->getQueryObject()->getEntityClass());
 				$gridExport->setExportClass(get_class($export));
-				$gridExport->setEmail($this->getPresenter()->getUser()->getIdentity()->getEmail());
+				$gridExport->setEmail($this->email);
 				$this->em->persist($gridExport);
 
 				if ($dataSource->getCount() > 1000) {
@@ -359,10 +360,10 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 	public function addAdvancedFilteredSearch(): void
 	{
-		$this->addFilterSelect(static::SELECTED_GRID_FILTER_KEY, '', $this->gridFilterQueryFactory->create()->byGrid(DataGridService::getGridName($this))->fetchPairs('name', 'id'))
+		$this->addFilterSelect(static::SELECTED_GRID_FILTER_KEY, '', $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetchPairs('name', 'id'))
 			->setPrompt('---')
 			->setCondition(function (QueryObject $query, $value) {
-				$this->applyAdvancedFilter($query, $this->gridFilterQueryFactory->create()->byGrid(DataGridService::getGridName($this))->byId($value)->fetchOne()->getValue());
+				$this->applyAdvancedFilter($query, $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->byId($value)->fetchOne()->getValue());
 			});
 		$this->addFilterText('advancedSearch', '')
 			->setCondition(function (QueryObject $query, $value) {
@@ -450,7 +451,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $this;
 	}
 
-	public function setDatagridService(DataGridService $datagridService): static
+	public function setDatagridService(DatagridService $datagridService): static
 	{
 		$this->datagridService = $datagridService;
 		return $this;
@@ -515,6 +516,18 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	public function setEntityManager(EntityManager $em): static
 	{
 		$this->em = $em;
+		return $this;
+	}
+	
+	public function setEmail(string $email): static
+	{
+		$this->email = $email;
+		return $this;
+	}
+	
+	public function setGridName(string $gridName): static
+	{
+		$this->gridName = $gridName;
 		return $this;
 	}
 }

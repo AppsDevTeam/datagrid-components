@@ -121,9 +121,4 @@ final readonly class DatagridService
 		
 		$this->em->flush();
 	}
-
-	public static function getGridName(Control $control): string
-	{
-		return $control->getPresenter()->getName() . '-' . $control->lookup(BaseGrid::class)->getName();
-	}
 }

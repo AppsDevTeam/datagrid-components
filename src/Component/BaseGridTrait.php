@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace ADT\Datagrid\Component;
 
 use ADT\Application\BasePresenter;
-use ADT\BackgroundQueue\BackgroundQueue;
 use ADT\Datagrid\Model\Queries\GridFilterQueryFactory;
 use ADT\Datagrid\Model\Service\DatagridService;
 use ADT\DoctrineComponents\EntityManager;
@@ -46,7 +45,7 @@ trait BaseGridTrait
 	abstract protected function getSecurityUser(): User;
 	abstract protected function createQueryObject(): QueryObject;
 	abstract protected function getEntityManager(): EntityManager;
-	abstract protected function getBackgroundQueue(): BackgroundQueue;
+	abstract protected function getEmail(): string;
 	abstract public function getParameter(string $name): mixed;
 
 	#[Autowire]
@@ -83,6 +82,8 @@ trait BaseGridTrait
 		$grid->setDatagridService($this->datagridService);
 		$grid->setGridFilterQueryFactory($this->getGridFilterQueryFactory());
 		$grid->setOuterFilterRendering();
+		$grid->setEmail($this->getEmail());
+		$grid->setGridName($this->getGridName());
 
 		$queryObject = $this->createQueryObject();
 		$this->initQueryObject($queryObject);
@@ -305,5 +306,10 @@ trait BaseGridTrait
 		$this->getPresenter()->flashMessageSuccess('action.delete.yes');
 
 		$this->getGrid()->handleResetAdvancedFilter();
+	}
+
+	public function getGridName(): string
+	{
+		return $this->getPresenter()->getName() . '-' . $this->getName();
 	}
 }

@@ -25,7 +25,6 @@ trait GridFilterFormTrait
 	abstract public function lookup(?string $type, bool $throw = true): ?IComponent;
 	abstract public function redrawControl(?string $snippet = null, bool $redraw = true): void;
 	abstract public function getPresenter(): ?Presenter;
-	abstract protected function getControl(): Control;
 
 	const array TRANSLATIONS = [// TODO překlady
 		'sEqual' => 'je rovno',
@@ -96,6 +95,8 @@ trait GridFilterFormTrait
 		self::F_TYPE_LIST_OPTS => 'list-options',
 		self::F_TYPE_LIST_DROPDOWN => 'list-dropdown',
 	];
+
+	protected string $gridName;
 
 	/**
 	 * @throws Exception
@@ -286,7 +287,7 @@ trait GridFilterFormTrait
 	{
 		$gridFilterQuery = $this->getGridFilterQuery()
 			->byName($inputs['name'])
-			->byGrid(DatagridService::getGridName($this->getControl()));
+			->byGrid($this->gridName);
 
 		if ($gridFilter) {
 			$gridFilterQuery->byIdNot($gridFilter->getId());
@@ -321,7 +322,7 @@ trait GridFilterFormTrait
 				if (method_exists($this, 'initEntity')) {
 					$this->initEntity($gridFilter);
 				}
-				$gridFilter->setGrid(DatagridService::getGridName($this->getControl()));
+				$gridFilter->setGrid($this->gridName);
 				$gridFilter->setValue($inputs['value']);
 				$gridFilter->setName($inputs['name']);
 				$this->getEntityManager()->persist($gridFilter);
@@ -366,5 +367,11 @@ trait GridFilterFormTrait
 	protected function getEntityClass(): string
 	{
 		return $this->getEntityManager()->findEntityClassByInterface(GridFilter::class);
+	}
+
+	protected function setGridName(string $gridName): static
+	{
+		$this->gridName = $gridName;
+		return $this;
 	}
 }
