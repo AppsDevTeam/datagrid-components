@@ -157,6 +157,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 					return [
 						'name' => $column->getName(),
 						'column' => $column->getColumn(),
+						'class' => get_class($column),
 					];
 				}, $this->columns);
 

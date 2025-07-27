@@ -9,7 +9,6 @@ use ADT\Datagrid\Model\Export\Excel\ExportExcel;
 use ADT\Datagrid\Model\Export\Excel\Model\ExcelDataModel;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\Files\Entities\File;
-use Contributte\Datagrid\Column\ColumnText;
 use Contributte\Datagrid\CsvDataModel;
 use Contributte\Datagrid\Export\ExportCsv;
 use Contributte\Datagrid\Row;
@@ -83,7 +82,7 @@ final readonly class DatagridService
 		
 		$columns = [];
 		foreach ($gridExport->getColumns() as $_key => $_value) {
-			$columns[] = new ColumnText($datagrid, $_key, $_value['column'], $_value['name']);
+			$columns[] = new $_value['class']($datagrid, $_key, $_value['column'], $_value['name']);
 		}
 		
 		$rows = [];
