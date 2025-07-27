@@ -15,7 +15,8 @@
     "nette/security": "^3.2",
     "adt/nette-application-components": "^1.0",
     "adt/utils": "^2.12",
-    "adt/doctrine-forms": "^2.1"
+    "adt/doctrine-forms": "^2.1",
+    "adt/files": "^6.0"
   },
   "autoload": {
     "psr-4": {

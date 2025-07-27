@@ -9,13 +9,13 @@ use ADT\Datagrid\Model\Queries\GridFilterQuery;
 use ADT\Datagrid\Model\Service\DatagridService;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\Forms\StaticContainer;
-use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Nette\Application\UI\Presenter;
 use Nette\ComponentModel\IComponent;
 use Nette\Forms\Form;
 use Nette\Utils\Json;
 use Nette\Utils\JsonException;
+use ReflectionException;
 
 trait GridFilterFormTrait
 {
@@ -306,6 +306,8 @@ trait GridFilterFormTrait
 
 	/**
 	 * @throws JsonException
+	 * @throws ReflectionException
+	 * @throws Exception
 	 */
 	public function processForm(?GridFilter $gridFilter, array $inputs): void
 	{
@@ -314,11 +316,13 @@ trait GridFilterFormTrait
 			if (!$gridFilter) {
 				/** @var GridFilter $gridFilter */
 				$gridFilter = new ($this->getEntityClass());
-				$this->initEntity($gridFilter);
+				if (method_exists($this, 'initEntity')) {
+					$this->initEntity($gridFilter);
+				}
 				$gridFilter->setGrid(DatagridService::getGridName($this));
 				$gridFilter->setValue($inputs['value']);
 				$gridFilter->setName($inputs['name']);
-				$this->em->persist($gridFilter);
+				$this->getEntityManager()->persist($gridFilter);
 			}
 			$this->getEntityManager()->flush();
 			unset($filters['advancedSearch']);
@@ -355,8 +359,11 @@ trait GridFilterFormTrait
 		return $this->lookup(BaseGrid::class);
 	}
 
+	/**
+	 * @throws ReflectionException
+	 */
 	protected function getEntityClass(): string
 	{
-		return $this->em->findEntityByInterface(GridFilter::class);
+		return $this->getEntityManager()->findEntityClassByInterface(GridFilter::class);
 	}
 }

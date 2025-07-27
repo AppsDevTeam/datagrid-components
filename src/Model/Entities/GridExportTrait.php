@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace ADT\Datagrid\Model\Entities;
 
 use ADT\Files\Entities\File;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\ORM\Mapping\Column;
 
 trait GridExportTrait
 {
 	#[ORM\Column(nullable: false)]
-	protected \DateTimeImmutable $createdAt;
+	protected DateTimeImmutable $createdAt;
 
 	#[ORM\Column(nullable: false)]
 	protected string $grid;
@@ -39,7 +39,7 @@ trait GridExportTrait
 
 	public function __construct()
 	{
-		$this->createdAt = new \DateTimeImmutable();
+		$this->createdAt = new DateTimeImmutable();
 	}
 
 	public function getGrid(): string
@@ -119,7 +119,7 @@ trait GridExportTrait
 		return $this;
 	}
 
-	public function getCreatedAt(): \DateTimeImmutable
+	public function getCreatedAt(): DateTimeImmutable
 	{
 		return $this->createdAt;
 	}

@@ -23,7 +23,6 @@ use Kdyby\Autowired\AutowireComponentFactories;
 use Kdyby\Autowired\AutowireProperties;
 use Nette\Application\AbortException;
 use Nette\Application\BadRequestException;
-use Nette\Application\UI\Control;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Localization\Translator;
 use Nette\Security\User;
@@ -47,6 +46,8 @@ trait BaseGridTrait
 	abstract protected function createQueryObject(): QueryObject;
 	abstract protected function getEntityManager(): EntityManager;
 	abstract protected function getBackgroundQueue(): BackgroundQueue;
+	abstract public function getParameter(string $name): mixed;
+	abstract public function initGrid(DataGrid $grid): void;
 
 	#[Autowire]
 	protected DatagridService $datagridService;
@@ -90,12 +91,11 @@ trait BaseGridTrait
 				->setClass('ajax datagrid-delete')
 				->setConfirmation(new StringConfirmation($this->getTranslator()->translate('action.delete.confirm')));
 		}
-		$grid->setGridName($this->getPresenter()->getName() . '-' . $this->getName());
 		$this->initGrid($grid);
 		$this->addIsActive($grid);
 
 		if ($grid->isSortable()) {
-			$grid->setSortableHandler($this->name . '-sortRows!');
+			$grid->setSortableHandler($this->getName() . '-sortRows!');
 		}
 
 		if ($grid->getTemplateFile() === $grid->getOriginalTemplateFile()) {

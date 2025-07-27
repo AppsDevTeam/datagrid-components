@@ -2,12 +2,9 @@
 
 namespace ADT\Datagrid\Console;
 
-use ADT\BackgroundQueue\BackgroundQueue;
-use ADT\BackgroundQueue\Entity\BackgroundJob;
 use ADT\Datagrid\Model\Entities\GridExport;
 use ADT\Datagrid\Model\Service\DatagridService;
 use ADT\DoctrineComponents\EntityManager;
-use DateTime;
 use Exception;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
@@ -16,8 +13,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 #[AsCommand(name: 'datagrid-components:process-exports', description: 'Process large exports.')]
 class ProcessExportsCommand extends Command
 {
-	protected static $defaultName = 'datagrid:process';
-
 	/**
 	 * @throws Exception
 	 */
@@ -34,7 +29,7 @@ class ProcessExportsCommand extends Command
 	 */
 	protected function executeCommand(InputInterface $input, OutputInterface $output): int
 	{
-		foreach ($this->em->getRepository($this->em->findEntityByInterface(GridExport::class))->findBy(['inBackground' => 1, 'file' => null]) as $_gridExport) {
+		foreach ($this->em->getRepository($this->em->findEntityClassByInterface(GridExport::class))->findBy(['inBackground' => 1, 'file' => null]) as $_gridExport) {
 			$this->datagridService->processExport($_gridExport);
 		}
 

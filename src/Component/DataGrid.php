@@ -55,7 +55,6 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	protected bool $actionsToDropdown = true;
 	protected bool $showTableFoot = true;
 	protected bool $rememberState = false;
-	protected string $gridName;
 
 	public function getSessionData(?string $key = null, mixed $defaultValue = null): array
 	{
@@ -139,7 +138,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->template->gridHtmlDataAttributes = $this->htmlDataAttributes;
 		$this->template->showTableFoot = $this->showTableFoot;
 		$this->template->toolbarButons = $this->toolbarButtons;
-		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetch();
+		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid(DataGridService::getGridName($this))->fetch();
 
 		parent::render();
 	}
@@ -168,16 +167,15 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$dataSource = $this->dataModel->getDataSource();
 		if ($dataSource instanceof QueryObjectDataSource) {
 			$this->dataModel->onAfterFilter[] = function() use ($dataSource, $export) {
-				$columns = [];
-				foreach ($this->columns as $key => $column) {
-					$columns[$key] = [
+				$columns = array_map(function ($column) {
+					return [
 						'name' => $column->getName(),
 						'column' => $column->getColumn(),
 					];
-				}
+				}, $this->columns);
 
 				/** @var \ADT\Datagrid\Model\Entities\GridExport $gridExport */
-				$gridExport = new ($this->em->findEntityByInterface(\ADT\Datagrid\Model\Entities\GridExport::class));
+				$gridExport = new ($this->em->findEntityClassByInterface(\ADT\Datagrid\Model\Entities\GridExport::class));
 				$gridExport->setColumns($columns);
 				$gridExport->setValue(array_values($dataSource->getQueryObject()->fetchField('id')));
 				$gridExport->setGrid(DatagridService::getGridName($this));
@@ -291,7 +289,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	public function addFilterSelectYear(string $key, string $name, ?string $maxYear = null): FilterSelect|Filter
 	{
 		if ($maxYear === null) {
-			$maxYear = (new DateTime())->format('Y');
+			$maxYear = new DateTime()->format('Y');
 		}
 
 		$yearsRange = range($maxYear, 2022);
@@ -374,10 +372,10 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 	public function addAdvancedFilteredSearch(): void
 	{
-		$this->addFilterSelect(static::SELECTED_GRID_FILTER_KEY, '', $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetchPairs('name', 'id'))
+		$this->addFilterSelect(static::SELECTED_GRID_FILTER_KEY, '', $this->gridFilterQueryFactory->create()->byGrid(DataGridService::getGridName($this))->fetchPairs('name', 'id'))
 			->setPrompt('---')
 			->setCondition(function (QueryObject $query, $value) {
-				$this->applyAdvancedFilter($query, $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->byId($value)->fetchOne()->getValue());
+				$this->applyAdvancedFilter($query, $this->gridFilterQueryFactory->create()->byGrid(DataGridService::getGridName($this))->byId($value)->fetchOne()->getValue());
 			});
 		$this->addFilterText('advancedSearch', '')
 			->setCondition(function (QueryObject $query, $value) {
@@ -460,21 +458,9 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		}
 	}
 
-	public function setBackgroundQueue(BackgroundQueue $backgroundQueue): static
-	{
-		$this->backgroundQueue = $backgroundQueue;
-		return $this;
-	}
-
 	public function setGridFilterQueryFactory(GridFilterQueryFactory $queryFactory): static
 	{
 		$this->gridFilterQueryFactory = $queryFactory;
-		return $this;
-	}
-
-	public function setGridName(string $gridName): static
-	{
-		$this->gridName = $gridName;
 		return $this;
 	}
 

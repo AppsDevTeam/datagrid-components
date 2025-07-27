@@ -3,37 +3,34 @@
 namespace ADT\Datagrid\Model\Service;
 
 use ADT\Datagrid\Component\BaseGrid;
+use ADT\Datagrid\Component\DataGrid;
 use ADT\Datagrid\Model\Entities\GridExport;
-use ADT\Datagrid\Model\Entities\GridFilter;
 use ADT\Datagrid\Model\Export\Excel\ExportExcel;
 use ADT\Datagrid\Model\Export\Excel\Model\ExcelDataModel;
 use ADT\DoctrineComponents\EntityManager;
-use ADT\QueryObjectDataSource\QueryObjectDataSource;
+use ADT\Files\Entities\File;
 use Contributte\Datagrid\Column\ColumnText;
 use Contributte\Datagrid\CsvDataModel;
-use Contributte\Datagrid\Datagrid;
-use Contributte\Datagrid\Export\Export;
 use Contributte\Datagrid\Export\ExportCsv;
-use Contributte\Datagrid\Response\CsvResponse;
 use Contributte\Datagrid\Row;
-use DateTimeImmutable;
-use DateTimeInterface;
-use DoctrineBatchUtils\BatchProcessing\SimpleBatchIteratorAggregate;
 use Exception;
-use Google\Api\Control;
 use Nette\Application\LinkGenerator;
+use Nette\Application\UI\Control;
+use Nette\Application\UI\InvalidLinkException;
 use Nette\Localization\Translator;
+use Nette\Mail\Mailer;
 use Nette\Mail\Message;
-use Ublaboo\DataGrid\Utils\PropertyAccessHelper;
+use ReflectionException;
+use XLSXWriter;
 
-final class DatagridService
+final readonly class DatagridService
 {
 	public function __construct(
-		private readonly array $config,
-		private readonly \Nette\Mail\Mailer $mailer,
-		private readonly EntityManager $em,
-		private readonly Translator $translator,
-		private readonly LinkGenerator $linkGenerator,
+		private array         $config,
+		private Mailer        $mailer,
+		private EntityManager $em,
+		private Translator    $translator,
+		private LinkGenerator $linkGenerator,
 	) {}
 
 	/**
@@ -41,8 +38,6 @@ final class DatagridService
 	 */
 	public function processExport(GridExport $gridExport): void
 	{
-		$header = [];
-		$firstRow = true;
 		ini_set('memory_limit', '10G');
 
 		$items = $this->em->getRepository($gridExport->getEntityClass())
@@ -57,6 +52,9 @@ final class DatagridService
 		$this->sendEmail($gridExport->getEmail(), $gridExport);
 	}
 
+	/**
+	 * @throws InvalidLinkException
+	 */
 	private function sendEmail(string $email, GridExport $gridExport): void
 	{
 		$message = new Message();
@@ -69,15 +67,19 @@ final class DatagridService
 		$this->mailer->send($message);
 	}
 
-	protected function getClassBaseName($gridName)
+	protected function normalizeGridName(string $gridName): string
 	{
 		// Odstraň poslední CamelCase slovo
 		return preg_replace('/[A-Z][a-z]*$/', '', explode('-', $gridName)[0]);
 	}
-	
-	public function saveFile(GridExport $gridExport, array $items)
+
+	/**
+	 * @throws ReflectionException
+	 * @throws Exception
+	 */
+	public function saveFile(GridExport $gridExport, array $items): void
 	{
-		$datagrid = new \ADT\Datagrid\Component\DataGrid();
+		$datagrid = new DataGrid();
 		
 		$columns = [];
 		foreach ($gridExport->getColumns() as $_key => $_value) {
@@ -91,7 +93,7 @@ final class DatagridService
 
 		if ($gridExport->getExportClass() === ExportExcel::class) {
 			$data = new ExcelDataModel($rows, $columns, $this->translator)->getSimpleData();
-			$writer = new \XLSXWriter();
+			$writer = new XLSXWriter();
 			$writer->writeSheet($data);
 			$content = $writer->writeToString();
 			$ext = 'xlsx';
@@ -104,22 +106,24 @@ final class DatagridService
 			rewind($stream);
 			$content = stream_get_contents($stream);
 			$ext = 'csv';
+		} else {
+			throw new Exception('Unsupported export type');
 		}
 
-		/** @var \ADT\Files\Entities\File $file */
-		$file = new ($this->em->findEntityByInterface(\ADT\Files\Entities\File::class));
+		/** @var File $file */
+		$file = new ($this->em->findEntityClassByInterface(File::class));
 		$gridExport->setFile(
 			$file
 				->setTemporaryContent(
 					$content,
-					$this->getClassBaseName($gridExport->getGrid()) . '_' . $gridExport->getCreatedAt()->format('Y-m-d_H-i') . '.' . $ext
+					$this->normalizeGridName($gridExport->getGrid()) . '_' . $gridExport->getCreatedAt()->format('Y-m-d_H-i') . '.' . $ext
 				)
 		);
 		
 		$this->em->flush();
 	}
 
-	public static function getGridName(\Nette\Application\UI\Control $control): string
+	public static function getGridName(Control $control): string
 	{
 		return $control->getPresenter()->getName() . '-' . $control->lookup(BaseGrid::class)->getName();
 	}
