@@ -69,7 +69,7 @@ final readonly class DatagridService
 	protected function normalizeGridName(string $gridName): string
 	{
 		// Odstraň poslední CamelCase slovo
-		return preg_replace('/[A-Z][a-z]*$/', '', explode('-', $gridName)[0]);
+		return preg_replace('/[A-Z][a-z]*$/', '', explode('-', $gridName)[1]);
 	}
 
 	/**
