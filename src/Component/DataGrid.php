@@ -52,6 +52,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	protected bool $showTableFoot = true;
 	protected bool $rememberState = false;
 	protected string $gridName;
+	protected string $email;
 
 	public function getSessionData(?string $key = null, mixed $defaultValue = null): array
 	{
