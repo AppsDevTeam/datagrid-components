@@ -10,6 +10,7 @@ use ADT\Datagrid\Model\Service\DatagridService;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\Forms\StaticContainer;
 use Exception;
+use Nette\Application\UI\Control;
 use Nette\Application\UI\Presenter;
 use Nette\ComponentModel\IComponent;
 use Nette\Forms\Form;
@@ -24,6 +25,7 @@ trait GridFilterFormTrait
 	abstract public function lookup(?string $type, bool $throw = true): ?IComponent;
 	abstract public function redrawControl(?string $snippet = null, bool $redraw = true): void;
 	abstract public function getPresenter(): ?Presenter;
+	abstract protected function getControl(): Control;
 
 	const array TRANSLATIONS = [// TODO překlady
 		'sEqual' => 'je rovno',
@@ -284,7 +286,7 @@ trait GridFilterFormTrait
 	{
 		$gridFilterQuery = $this->getGridFilterQuery()
 			->byName($inputs['name'])
-			->byGrid(DatagridService::getGridName($this));
+			->byGrid(DatagridService::getGridName($this->getControl()));
 
 		if ($gridFilter) {
 			$gridFilterQuery->byIdNot($gridFilter->getId());
@@ -319,7 +321,7 @@ trait GridFilterFormTrait
 				if (method_exists($this, 'initEntity')) {
 					$this->initEntity($gridFilter);
 				}
-				$gridFilter->setGrid(DatagridService::getGridName($this));
+				$gridFilter->setGrid(DatagridService::getGridName($this->getControl()));
 				$gridFilter->setValue($inputs['value']);
 				$gridFilter->setName($inputs['name']);
 				$this->getEntityManager()->persist($gridFilter);
