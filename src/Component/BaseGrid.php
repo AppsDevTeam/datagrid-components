@@ -117,10 +117,7 @@ abstract class BaseGrid extends Control
 				->setConfirmation(new StringConfirmation($this->getTranslator()->translate('action.delete.confirm')));
 		}
 
-
-		if ($grid->isSortable()) {
-			$grid->setSortableHandler($this->getName() . '-sortRows!');
-		}
+		$grid->setSortableHandler($this->getName() . '-sortRows!');
 
 		if ($grid->getTemplateFile() === $grid->getOriginalTemplateFile()) {
 			$_reflectionClass = new ReflectionClass($this);
