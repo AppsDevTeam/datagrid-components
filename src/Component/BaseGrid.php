@@ -25,6 +25,7 @@ use Nette\Application\BadRequestException;
 use Nette\Application\UI\Control;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Application\UI\Presenter;
+use Nette\DI\Container;
 use Nette\Localization\Translator;
 use Nette\Security\User;
 use ReflectionClass;
@@ -44,7 +45,6 @@ abstract class BaseGrid extends Control
 	abstract protected function getGridFilterQueryFactory(): GridFilterQueryFactory;
 	abstract protected function getQueryObjectDataSourceFactory(): IQueryObjectDataSourceFactory;
 	abstract protected function getSecurityUser(): User;
-	abstract protected function createQueryObject(): QueryObject;
 	abstract protected function getEntityManager(): EntityManager;
 	abstract protected function getEmail(): string;
 
@@ -67,6 +67,16 @@ abstract class BaseGrid extends Control
 			$this->initGrid($grid);
 			$this->addIsActive($grid);
 		});
+	}
+
+	protected function createQueryObject(): QueryObject
+	{
+		return $this->getDic()->getByType($this->getQueryObjectFactoryClass())->create();
+	}
+
+	protected function getDic(): Container
+	{
+		return $this->autowirePropertiesLocator;
 	}
 
 	/**
