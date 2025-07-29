@@ -6,11 +6,9 @@ use ADT\Datagrid\Component\BaseGrid;
 use ADT\Datagrid\Component\DataGrid;
 use ADT\Datagrid\Model\Entities\GridFilter;
 use ADT\Datagrid\Model\Queries\GridFilterQuery;
-use ADT\Datagrid\Model\Service\DatagridService;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\Forms\StaticContainer;
 use Exception;
-use Nette\Application\UI\Control;
 use Nette\Application\UI\Presenter;
 use Nette\ComponentModel\IComponent;
 use Nette\Forms\Form;
@@ -96,7 +94,7 @@ trait GridFilterFormTrait
 		self::F_TYPE_LIST_DROPDOWN => 'list-dropdown',
 	];
 
-	protected string $gridName;
+	protected BaseGrid $grid;
 
 	/**
 	 * @throws Exception
@@ -105,13 +103,13 @@ trait GridFilterFormTrait
 	{
 		$defaults = [];
 		if (!$gridFilter) {
-			$defaults['value'] = !empty($this->getGrid()->getGrid()->getParameters()['filter']['advancedSearch'])
-				? Json::decode($this->getGrid()['grid']->getParameters()['filter']['advancedSearch'], forceArrays: true)
+			$defaults['value'] = !empty($this->grid->getGrid()->getParameters()['filter']['advancedSearch'])
+				? Json::decode($this->grid->getGrid()->getParameters()['filter']['advancedSearch'], forceArrays: true)
 				: [];
 		}
 
 		$filterList = [];
-		foreach ($this->getGrid()->getGrid()->getGridFilterFields() as $item) {
+		foreach ($this->grid->getGrid()->getGridFilterFields() as $item) {
 			$filterList[$item['id']] = $item;
 		}
 
@@ -260,23 +258,23 @@ trait GridFilterFormTrait
 		}, isRequiredMessage: 'Zadejte alespoň 1 filtr.'); // TODO translate
 
 		$form->addCheckbox('save', 'Uložit') // TODO translate
-			->addCondition(Form::Equal, true)
-				->toggle('name-block');
+		->addCondition(Form::Equal, true)
+			->toggle('name-block');
 
 		if ($gridFilter) {
 			$form['save']->setDefaultValue(1);
 		}
 
 		$form->addText('name', 'Název')// TODO translate
-			->addConditionOn($form['save'], Form::Equal, true)
+		->addConditionOn($form['save'], Form::Equal, true)
 			->setRequired();
 
 		$form->addSubmit("submit", "app.forms.favouriteProduct.labels.submit");
 		$form->addSubmit("autoSubmit", "app.forms.favouriteProduct.labels.submit")
 			->setValidationScope([])
 			->onClick[] = function () {
-				$this->redrawControl('filterList');
-			};
+			$this->redrawControl('filterList');
+		};
 
 		if (!$gridFilter) {
 			$form->setDefaults($defaults);
@@ -287,7 +285,7 @@ trait GridFilterFormTrait
 	{
 		$gridFilterQuery = $this->getGridFilterQuery()
 			->byName($inputs['name'])
-			->byGrid($this->gridName);
+			->byGrid($this->grid->getName());
 
 		if ($gridFilter) {
 			$gridFilterQuery->byIdNot($gridFilter->getId());
@@ -314,7 +312,7 @@ trait GridFilterFormTrait
 	 */
 	public function processForm(?GridFilter $gridFilter, array $inputs): void
 	{
-		$filters = $this->getGrid()->getGrid()->getParameters()['filter'];
+		$filters = $this->grid->getGrid()->getParameters()['filter'];
 		if ($inputs['save']) {
 			if (!$gridFilter) {
 				/** @var GridFilter $gridFilter */
@@ -322,7 +320,7 @@ trait GridFilterFormTrait
 				if (method_exists($this, 'initEntity')) {
 					$this->initEntity($gridFilter);
 				}
-				$gridFilter->setGrid($this->gridName);
+				$gridFilter->setGrid($this->grid->getName());
 				$gridFilter->setValue($inputs['value']);
 				$gridFilter->setName($inputs['name']);
 				$this->getEntityManager()->persist($gridFilter);
@@ -335,7 +333,7 @@ trait GridFilterFormTrait
 			$filters = array_merge($filters, ['advancedSearch' => Json::encode($inputs['value'])]);
 		}
 
-		$grid = $this->getGrid()->getGrid();
+		$grid = $this->grid->getGrid();
 		$grid->setFilter($filters);
 		$grid->handleRefreshState();
 	}
@@ -356,11 +354,6 @@ trait GridFilterFormTrait
 		return __DIR__ . '/GridFilterForm.latte';
 	}
 
-	protected function getGrid(): BaseGrid
-	{
-		return $this->lookup(BaseGrid::class);
-	}
-
 	/**
 	 * @throws ReflectionException
 	 */
@@ -369,9 +362,9 @@ trait GridFilterFormTrait
 		return $this->getEntityManager()->findEntityClassByInterface(GridFilter::class);
 	}
 
-	protected function setGridName(string $gridName): static
+	public function setGrid(BaseGrid $grid): static
 	{
-		$this->gridName = $gridName;
+		$this->grid = $grid;
 		return $this;
 	}
 }
