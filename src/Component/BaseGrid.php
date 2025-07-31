@@ -171,7 +171,13 @@ abstract class BaseGrid extends Control
 			try {
 				$this->getPresenter()->{$methodName}($id);
 			} catch (InvalidLinkException | TypeError) {
-				$this->getPresenter()->{$methodName}($this->createQueryObject()->byId($id)->fetchOne());
+				$row = $this->createQueryObject()->byId($id)->getQuery()->getSingleResult();
+				if (is_array($row)) {
+					$entity = $row[0];
+				} else {
+					$entity = $row;
+				}
+				$this->getPresenter()->{$methodName}($entity);
 			}
 		} else {
 			// because of "Argument $order passed to App\Modules\SystemModule\Orders\OrdersPresenter::actionEdit() must be App\Model\Entity\Order, integer given."
