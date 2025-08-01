@@ -320,7 +320,7 @@ trait GridFilterFormTrait
 				if (method_exists($this, 'initEntity')) {
 					$this->initEntity($gridFilter);
 				}
-				$gridFilter->setGrid($this->grid->getName());
+				$gridFilter->setGrid($this->grid->getGridName());
 				$gridFilter->setValue($inputs['value']);
 				$gridFilter->setName($inputs['name']);
 				$this->getEntityManager()->persist($gridFilter);
