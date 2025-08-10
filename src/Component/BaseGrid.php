@@ -64,6 +64,12 @@ abstract class BaseGrid extends Control
 				throw new Exception('Define initGrid method!');
 			}
 
+			if (isset($grid->getParameter('filter')[DataGrid::SELECTED_GRID_FILTER_KEY])) {
+				if (!$this->gridFilterQueryFactory->create()->byId($grid->getParameter('filter')[DataGrid::SELECTED_GRID_FILTER_KEY])->fetchOneOrNull()) {
+					$grid->handleResetAdvancedFilter();
+				}
+			}
+
 			$this->initGrid($grid);
 			$this->addIsActive($grid);
 		});
