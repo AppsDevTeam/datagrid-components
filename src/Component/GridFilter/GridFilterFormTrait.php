@@ -328,6 +328,7 @@ trait GridFilterFormTrait
 			$this->getEntityManager()->flush();
 			unset($filters['advancedSearch']);
 			$filters = array_merge($filters, [DataGrid::SELECTED_GRID_FILTER_KEY => $gridFilter->getId()]);
+			$this->grid->getGrid()['filter']['filter'][DataGrid::SELECTED_GRID_FILTER_KEY]->setItems($this->grid->getGrid()->getAdvancedFilterItems());
 		} else {
 			unset($filters[DataGrid::SELECTED_GRID_FILTER_KEY]);
 			$filters = array_merge($filters, ['advancedSearch' => Json::encode($inputs['value'])]);

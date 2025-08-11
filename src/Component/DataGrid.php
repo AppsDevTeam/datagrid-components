@@ -361,17 +361,15 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 	public function addAdvancedFilteredSearch(): void
 	{
-		$this->onRender[] = function() {
-			$this->addFilterSelect(static::SELECTED_GRID_FILTER_KEY, '', $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetchPairs('name', 'id'))
-				->setPrompt('---')
-				->setCondition(function (QueryObject $query, $value) {
-					$this->applyAdvancedFilter($query, $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->byId($value)->fetchOne()->getValue());
-				});
-			$this->addFilterText('advancedSearch', '')
-				->setCondition(function (QueryObject $query, $value) {
-					$this->applyAdvancedFilter($query, Json::decode($value, forceArrays: true));
-				});
-		};
+		$this->addFilterSelect(static::SELECTED_GRID_FILTER_KEY, '', $this->getAdvancedFilterItems())
+			->setPrompt('---')
+			->setCondition(function (QueryObject $query, $value) {
+				$this->applyAdvancedFilter($query, $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->byId($value)->fetchOne()->getValue());
+			});
+		$this->addFilterText('advancedSearch', '')
+			->setCondition(function (QueryObject $query, $value) {
+				$this->applyAdvancedFilter($query, Json::decode($value, forceArrays: true));
+			});
 	}
 
 	/**
@@ -532,5 +530,10 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	{
 		$this->gridName = $gridName;
 		return $this;
+	}
+
+	public function getAdvancedFilterItems(): array
+	{
+		return $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetchPairs('name', 'id');
 	}
 }
