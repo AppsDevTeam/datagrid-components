@@ -241,8 +241,11 @@ abstract class BaseGrid extends Control
 			$this->getPresenter()->error();
 		}
 
-		if (!$entity = $this->createQueryObject()->byId($id)->fetchOneOrNull()) {
-			$this->getPresenter()->error();
+		$row = $this->createQueryObject()->byId($id)->getQuery()->getSingleResult();
+		if (is_array($row)) {
+			$entity = $row[0];
+		} else {
+			$entity = $row;
 		}
 
 		if ($this->allowDelete()->onDelete && !($this->allowDelete()->onDelete)($entity)) {
