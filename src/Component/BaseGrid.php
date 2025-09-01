@@ -309,6 +309,9 @@ abstract class BaseGrid extends Control
 			$order[] = $key;
 			$i++;
 		}
+		if (count($order) === 1) {
+			$order[] = 'isActive';
+		}
 
 		$grid->addColumnText('isActive', 'app.forms.global.isActive');
 		$grid->setColumnsOrder($order);
