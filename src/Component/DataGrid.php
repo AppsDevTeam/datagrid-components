@@ -249,7 +249,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 	public function addColumnDateTime(string $key, string $name, ?string $column = null): ColumnDateTime
 	{
-		return parent::addColumnDateTime($key, $name, $column)->setAlign('left');
+		return parent::addColumnDateTime($key, $name, $column)->setFormat('j. n. Y G:i')->setAlign('left');
 	}
 
 	public function addColumnNumber(string $key, string $name, ?string $column = null): ColumnNumber

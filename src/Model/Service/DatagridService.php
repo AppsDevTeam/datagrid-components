@@ -9,6 +9,7 @@ use ADT\Datagrid\Model\Export\Excel\ExportExcel;
 use ADT\Datagrid\Model\Export\Excel\Model\ExcelDataModel;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\Files\Entities\File;
+use Contributte\Datagrid\Column\ColumnDateTime;
 use Contributte\Datagrid\CsvDataModel;
 use Contributte\Datagrid\Export\ExportCsv;
 use Contributte\Datagrid\Row;
@@ -82,7 +83,10 @@ final readonly class DatagridService
 		
 		$columns = [];
 		foreach ($gridExport->getColumns() as $_key => $_value) {
-			$columns[] = new $_value['class']($datagrid, $_key, $_value['column'], $_value['name']);
+			$columns[] = $_column = new $_value['class']($datagrid, $_key, $_value['column'], $_value['name']);
+			if ($_column instanceof ColumnDateTime) {
+				$_column->setFormat('j. n. Y G:i');
+			}
 		}
 		
 		$rows = [];
