@@ -3,13 +3,14 @@
 namespace ADT\Datagrid\Filter;
 
 use Contributte\Datagrid\Datagrid;
+use Contributte\Datagrid\Filter\Filter;
 use Contributte\Datagrid\Filter\FilterText;
 use Nette\Application\UI\Form;
 use Nette\Forms\Container;
 use Nette\Forms\Controls\BaseControl;
 use UnexpectedValueException;
 
-class FilterCheckbox extends FilterText
+class FilterCheckbox extends Filter
 {
 
 	protected array $attributes = [
@@ -22,6 +23,8 @@ class FilterCheckbox extends FilterText
 
 	protected bool $defaultValue = false;
 
+	protected string $column;
+
 	public function __construct(
 		Datagrid $grid,
 		string $key,
@@ -29,7 +32,8 @@ class FilterCheckbox extends FilterText
 		string $column
 	)
 	{
-		parent::__construct($grid, $key, $name, (array)$column);
+		$this->column = $column;
+		parent::__construct($grid, $key, $name);
 	}
 
 	public function addToFormContainer(Container $container): void
@@ -81,5 +85,10 @@ class FilterCheckbox extends FilterText
 	{
 		$this->defaultValue = $defaultValue;
 		return $this;
+	}
+
+	public function getCondition(): array
+	{
+		return array_fill_keys((array)$this->column, $this->getValue());
 	}
 }
