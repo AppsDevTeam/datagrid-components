@@ -1,0 +1,9 @@
+{**
+ * @param Filter                         $filter
+ * @param Nette\Forms\Controls\TextInput $input
+ *}
+<div class="form-check form-switch">
+	{php $input->setValue($isActiveValue)} {* TODO *}
+	<input n:name="$input" type="hidden" value="0" />
+	<input n:name="$input" value="1" />
+</div>

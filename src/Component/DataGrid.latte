@@ -111,10 +111,14 @@
 							</div>
 
 							<span class="datagrid-exports" n:if="$exports" n:snippet="exports" n:block="exports">
-							{foreach $exports as $export}
-								{$export->setClass('btn noajax')->render()}
-							{/foreach}
-						</span>
+								{foreach $exports as $export}
+									{$export->setClass('btn noajax')->render()}
+								{/foreach}
+							</span>
+							<span class="datagrid-exports d-flex align-items-center" n:ifset="$filters['isActive']" n:snippet="isActive" n:block="isActive">
+								{var $form = $control['filter']}
+								{include $filters['isActive']->getTemplate(), filter => $filters['isActive'], input => $form['filter'][$filters['isActive']->getKey()], outer => TRUE}
+							</span>
 						</div>
 					</div>
 
@@ -131,7 +135,7 @@
 								{var $i = 0}
 								{var $filter_columns_class = 'col-sm-' . (12 / $control->getOuterFilterColumnsCount())}
 								{foreach $filters as $filterName => $f}
-									{continueIf $filterName === 'search'}
+									{continueIf in_array($filterName, ['search', 'isActive'])}
 									{**
 									 * Each fitler is rendered separately in its own template
 									 *}
