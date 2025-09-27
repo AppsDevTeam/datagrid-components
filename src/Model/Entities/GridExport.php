@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace ADT\Datagrid\Model\Entities;
 
-use ADT\DoctrineComponents\IEntity;
+use ADT\DoctrineComponents\Entities\Entity;
 use ADT\Files\Entities\File;
 use DateTimeImmutable;
 
-interface GridExport extends IEntity
+interface GridExport extends Entity
 {
 	public function getGrid(): string;
 	public function setGrid(string $grid): static;
