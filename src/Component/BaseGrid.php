@@ -5,12 +5,9 @@ declare(strict_types=1);
 namespace ADT\Datagrid\Component;
 
 use ADT\Application\BasePresenter;
-use ADT\Datagrid\Model\Queries\GridFilterQueryFactory;
 use ADT\Datagrid\Model\Service\DatagridService;
-use ADT\DoctrineComponents\EntityManager;
 use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
-use ADT\QueryObjectDataSource\IQueryObjectDataSourceFactory;
 use Closure;
 use Contributte\Datagrid\Column\Action\Confirmation\StringConfirmation;
 use Contributte\Datagrid\Exception\DatagridException;
@@ -26,8 +23,6 @@ use Nette\Application\UI\Control;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Application\UI\Presenter;
 use Nette\DI\Container;
-use Nette\Localization\Translator;
-use Nette\Security\User;
 use ReflectionClass;
 use ReflectionException;
 use TypeError;
@@ -39,14 +34,7 @@ abstract class BaseGrid extends Control
 {
 	use AutowireProperties;
 	use AutowireComponentFactories;
-
-	abstract protected function getDataGridClass(): string;
-	abstract protected function getTranslator(): Translator;
-	abstract protected function getGridFilterQueryFactory(): GridFilterQueryFactory;
-	abstract protected function getQueryObjectDataSourceFactory(): IQueryObjectDataSourceFactory;
-	abstract protected function getSecurityUser(): User;
-	abstract protected function getEntityManager(): EntityManager;
-	abstract protected function getEmail(): string;
+	use BaseGridDependencies;
 
 	#[Autowire]
 	protected DatagridService $datagridService;
