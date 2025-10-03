@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace ADT\Datagrid\Model\Entities;
 
-interface GridFilter
+use ADT\DoctrineComponents\Entities\Entity;
+
+interface GridFilter extends Entity
 {
 	public function getId(): ?int;
 	public function getGrid(): string;

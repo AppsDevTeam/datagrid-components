@@ -8,7 +8,6 @@
     "adt/query-object-data-source": "^3.0",
     "contributte/translation": "^2.0",
     "kdyby/autowired": "^3.0",
-    "adt/background-queue-nette": "^3.0",
     "mk-j/php_xlsxwriter": "^0.39.0",
     "adt/doctrine-components": "^3.0",
     "nette/mail": "^4.0",
