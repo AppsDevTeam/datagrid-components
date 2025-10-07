@@ -338,8 +338,10 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 			->addAttribute('title', $this->translator->translate('app.forms.global.isActive.title'));
 
 		if (
-			(isset($this->params['filter']['isActive']) && $this->params['filter']['isActive'] === 'true')
-			|| (isset($postRequest['isActive']) && $postRequest['isActive'] === '1')
+			(isset($this->params['filter']['isActive']) && (
+				$this->params['filter']['isActive'] === 'true'
+				|| $this->params['filter']['isActive'] === '1')
+			) || (isset($postRequest['isActive']) && $postRequest['isActive'] === '1')
 		) {
 			$isActive
 				->setValue(true)
@@ -347,8 +349,10 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 				->addAttribute('checked', 'checked');
 		}
 		elseif (
-			(isset($this->params['filter']['isActive']) && $this->params['filter']['isActive'] === 'false')
-			|| (isset($postRequest['isActive']) && $postRequest['isActive'] === '0')
+			(isset($this->params['filter']['isActive']) && (
+				$this->params['filter']['isActive'] === 'false'
+				|| $this->params['filter']['isActive'] === '0')
+			) || (isset($postRequest['isActive']) && $postRequest['isActive'] === '0')
 		) {
 			$isActive->setCondition(function (IsActiveFilter $query) {
 				$query->disableIsActiveFilter();
@@ -591,5 +595,10 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	public function getAdvancedFilterItems(): array
 	{
 		return $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetchPairs('name', 'id');
+	}
+
+	public function getIsActiveValue(): bool
+	{
+		return $this->isActiveValue;
 	}
 }

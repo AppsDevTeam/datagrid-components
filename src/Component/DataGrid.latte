@@ -117,9 +117,9 @@
 							</span>
 							{block isActive}
 								{ifset $filters['isActive']}
-									{var $form = $control['filter']}
-									{if isset($form['filter']) && isset($form['filter'][$filters['isActive']->getKey()])}
+									{if isset($control['filter']['filter']) && isset($control['filter']['filter'][$filters['isActive']->getKey()])}
 										{snippet isActive}
+											{var $form = $control['filter']}
 											<span n:ifset="$filters['isActive']" class="datagrid-exports d-flex align-items-center">
 												{include $filters['isActive']->getTemplate(),
 													filter => $filters['isActive'],
@@ -666,13 +666,30 @@
 			}
 		}
 
+        function hideIsActiveHeader() {
+            const target = document.querySelector('tbody .col-isActive');
+            const header = document.querySelector('thead .col-isActive');
+
+            if (target && header) {
+                if (target.classList.contains('d-none')) {
+                    header.classList.add('d-none');
+                } else {
+                    header.classList.remove('d-none');
+                }
+            }
+        }
+
+
 		document.addEventListener("DOMContentLoaded", () => {
 			const inputSelector = '.form-group-filter input:not([name*="advanced"])';
 
+            hideIsActiveHeader();
 			toggleClass($(inputSelector)[0]);
 			$(inputSelector).change((e) => {
 				toggleClass(e.currentTarget);
 			});
+
+            $(document).ajaxComplete(() => hideIsActiveHeader());
 		});
 	</script>
 {/define}
