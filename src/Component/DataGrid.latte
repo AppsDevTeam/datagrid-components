@@ -79,23 +79,23 @@
 									<button type="button" class="btn dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
 									</button>
 
-                                    <div style="display: none">
-                                        {input $control['filter']['filter'][\ADT\Datagrid\Component\DataGrid::SELECTED_GRID_FILTER_KEY]}
-                                        {input $control['filter']['filter']['advancedSearch']}
-                                    </div>
+									<div style="display: none">
+										{input $control['filter']['filter'][\ADT\Datagrid\Component\DataGrid::SELECTED_GRID_FILTER_KEY]}
+										{input $control['filter']['filter']['advancedSearch']}
+									</div>
 									<ul class="dropdown-menu dropdown-menu-end">
 										{foreach $gridFilters as $gridFilter}
 											<li n:class="dropdown-item, $selectedGridFilter === $gridFilter ? 'selected'">
 												<a onclick="$(this).closest('form').find('[name=\'filter[{= \ADT\Datagrid\Component\DataGrid::SELECTED_GRID_FILTER_KEY|noescape}]\']').val({$gridFilter->getId()}); $(this).closest('form')[0].submit()">
 													{$gridFilter->getName()}
 													<div class="filter-item-actions">
-                                                        <a class="btn-edit" href="{$control->getParent()->link('editAdvancedFilter!', ['editId' => $gridFilter->getId()])}">
-                                                            <i class="fa-solid fa-pen"></i>
-                                                        </a>
-                                                        <a class="btn-edit" href="{$control->getParent()->link('deleteGridFilter!', ['deleteId' => $gridFilter->getId()])}">
-                                                            <i class="fa-solid fa-trash"></i>
-                                                        </a>
-                                                    </div>
+														<a class="btn-edit" href="{$control->getParent()->link('editAdvancedFilter!', ['editId' => $gridFilter->getId()])}">
+															<i class="fa-solid fa-pen"></i>
+														</a>
+														<a class="btn-edit" href="{$control->getParent()->link('deleteGridFilter!', ['deleteId' => $gridFilter->getId()])}">
+															<i class="fa-solid fa-trash"></i>
+														</a>
+													</div>
 												</a>
 
 											</li>
@@ -115,10 +115,22 @@
 									{$export->setClass('btn noajax')->render()}
 								{/foreach}
 							</span>
-							<span class="datagrid-exports d-flex align-items-center" n:ifset="$filters['isActive']" n:snippet="isActive" n:block="isActive">
-								{var $form = $control['filter']}
-								{include $filters['isActive']->getTemplate(), filter => $filters['isActive'], input => $form['filter'][$filters['isActive']->getKey()], outer => TRUE}
-							</span>
+							{block isActive}
+								{ifset $filters['isActive']}
+									{var $form = $control['filter']}
+									{if isset($form['filter']) && isset($form['filter'][$filters['isActive']->getKey()])}
+										{snippet isActive}
+											<span n:ifset="$filters['isActive']" class="datagrid-exports d-flex align-items-center">
+												{include $filters['isActive']->getTemplate(),
+													filter => $filters['isActive'],
+													input => $form['filter'][$filters['isActive']->getKey()],
+													outer => TRUE
+												}
+											</span>
+										{/snippet}
+									{/if}
+								{/ifset}
+							{/block}
 						</div>
 					</div>
 
@@ -345,9 +357,9 @@
 
 												{var $td = $column->getElementForRender('td', $key, $row)}
 												{$td->startTag()|noescape}
-												    <div>
-												        {include column-value, column => $column, row => $row, key => $key}
-                                                    </div>
+													<div>
+														{include column-value, column => $column, row => $row, key => $key}
+													</div>
 												{$td->endTag()|noescape}
 											{/foreach}
 											<td n:if="$actions || $control->isSortable() || $itemsDetail || $inlineEdit || $inlineAdd" class="col-action dropdown">
@@ -363,19 +375,19 @@
 													{/foreach}
 													{var $dropdownActions = array_filter($actions, fn($action) => !in_array($action->getClass($row), \ADT\Datagrid\Component\DataGrid::ACTION_NOT_DROPDOWN_ITEM, true) && $row->hasAction($key) && $action->shouldBeRendered($row))}
 													{foreach $dropdownActions as $key => $action}
-                                                        {if !$actionButtonRendered}
-                                                            <button type="button" class="btn btn-sm" data-action="{$key}" data-bs-toggle="dropdown">
-                                                                <i class="fa fa-ellipsis-h"></i>
-                                                            </button>
-                                                            <div class="dropdown-menu dropdown-menu-right">
+														{if !$actionButtonRendered}
+															<button type="button" class="btn btn-sm" data-action="{$key}" data-bs-toggle="dropdown">
+																<i class="fa fa-ellipsis-h"></i>
+															</button>
+															<div class="dropdown-menu dropdown-menu-right">
 
-                                                            {php $actionButtonRendered = true}
-                                                        {/if}
+															{php $actionButtonRendered = true}
+														{/if}
 
-                                                        {include action}
-                                                        {if $actionButtonRendered && $iterator->isLast()}
-                                                            </div>
-                                                        {/if}
+														{include action}
+														{if $actionButtonRendered && $iterator->isLast()}
+															</div>
+														{/if}
 													{/foreach}
 													<span class="handle-sort btn btn-xs btn-default" n:if="$control->isSortable()">
 														<i n:block = "icon-arrows-v" class="{$iconPrefix}arrows-v"></i>
@@ -462,9 +474,9 @@
 					{/block}
 				</table>
 			</div>
-                <div class="table-bottom-scroll">
-                        <div class="table-bottom-scroll-inner"></div>
-                </div>
+				<div class="table-bottom-scroll">
+						<div class="table-bottom-scroll-inner"></div>
+				</div>
 			</div>
 			{block tfoot}
 				{if	$showTableFoot && $control->isPaginated()}
@@ -631,7 +643,7 @@
 {/define}
 
 {define col-isActive}
-    {$item->getIsActive()|boolIcon}
+	{$item->getIsActive()|boolIcon}
 {/define}
 
 {include gridScript}
