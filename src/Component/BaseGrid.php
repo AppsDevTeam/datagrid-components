@@ -304,6 +304,11 @@ abstract class BaseGrid extends Control
 		$grid->addColumnText('isActive', 'app.forms.global.isActive.label');
 		$grid->setColumnsOrder($order);
 		$grid->addIsActiveSwitcher();
+
+		if ($grid->getIsActiveValue()) {
+			$grid->getColumns()['isActive']
+				->addCellAttributes(['class' => 'd-none']);
+		}
 	}
 
 	/**
