@@ -464,6 +464,9 @@
 												{$customNoItemFoundMessage|noescape}
 											{else}
 												{='ublaboo_datagrid.no_item_found'|translate}
+												{if $isActiveValue}
+													<a n:href="this filter => [isActive => 'false']">{='ublaboo_datagrid.disable_is_active_filter'|translate}</a>
+												{/if}
 											{/ifset}
 										{/if}
 									</td>
@@ -666,30 +669,30 @@
 			}
 		}
 
-        function hideIsActiveHeader() {
-            const target = document.querySelector('tbody .col-isActive');
-            const header = document.querySelector('thead .col-isActive');
+		function hideIsActiveHeader() {
+			const target = document.querySelector('tbody .col-isActive');
+			const header = document.querySelector('thead .col-isActive');
 
-            if (target && header) {
-                if (target.classList.contains('d-none')) {
-                    header.classList.add('d-none');
-                } else {
-                    header.classList.remove('d-none');
-                }
-            }
-        }
+			if (target && header) {
+				if (target.classList.contains('d-none')) {
+					header.classList.add('d-none');
+				} else {
+					header.classList.remove('d-none');
+				}
+			}
+		}
 
 
 		document.addEventListener("DOMContentLoaded", () => {
 			const inputSelector = '.form-group-filter input:not([name*="advanced"])';
 
-            hideIsActiveHeader();
+			hideIsActiveHeader();
 			toggleClass($(inputSelector)[0]);
 			$(inputSelector).change((e) => {
 				toggleClass(e.currentTarget);
 			});
 
-            $(document).ajaxComplete(() => hideIsActiveHeader());
+			$(document).ajaxComplete(() => hideIsActiveHeader());
 		});
 	</script>
 {/define}

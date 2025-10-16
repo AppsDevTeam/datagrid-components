@@ -401,6 +401,11 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		}
 	}
 
+	public function handleSwitchIsActive()
+	{
+		$this->redirect('this', ['filter' => ['isActive' => 'false']]);
+	}
+
 	/**
 	 * @throws DatagridException
 	 */
@@ -600,25 +605,5 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	public function getIsActiveValue(): bool
 	{
 		return $this->isActiveValue;
-	}
-
-	public function getTemplateFile(): string
-	{
-		$reflectionClass = new \ReflectionClass($this);
-		$templateName = $reflectionClass->getShortName() .'.latte';
-
-		$templateFile = dirname($reflectionClass->getFileName()) . '/' . $templateName;
-		if (file_exists($templateFile)) {
-			return $templateFile;
-		}
-
-		foreach ($reflectionClass->getInterfaces() as $_interface => $_interfaceReflectionClass) {
-			if (str_contains($_interface, $reflectionClass->getShortName())) {
-				$templateFile = dirname($_interfaceReflectionClass->getFileName()) . '/' . $templateName;
-				if (file_exists($templateFile)) {
-					return $templateFile;
-				}
-			}
-		}
 	}
 }

@@ -2,13 +2,15 @@
 
 namespace ADT\Datagrid\Component;
 
+use Nette\Security\Resource;
+
 class EditParams
 {
-	public string $acl;
+	public Resource $acl;
 	public string $redirect;
 	public $condition;
 
-	public function __construct(string $acl, string $redirect, ?callable $condition = null)
+	public function __construct(Resource $acl, string $redirect, ?callable $condition = null)
 	{
 		$this->acl = $acl;
 		$this->redirect = $redirect;
@@ -17,7 +19,7 @@ class EditParams
 
 	public function getAcl(): string
 	{
-		return $this->acl;
+		return $this->acl->value;
 	}
 
 	public function getCondition(): ?callable

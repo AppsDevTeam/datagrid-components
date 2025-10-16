@@ -1,0 +1,27 @@
+edit: Upravit
+no_item_found_reset: "Žádné položky nenalezeny. Můžete zkusit restartovat filtr."
+here: here
+no_item_found: "Žádné položky nenalezeny."
+group_actions: "Group actions"
+all: all
+reset_filter: "Reset filter"
+items: Items
+from: from
+show: Show
+show_all_columns: "Show all columns"
+show_default_columns: "Show default columns"
+hide_column: "Hide column"
+action: Action
+previous: Previous
+next: Next
+choose: Choose
+choose_input_required: "Group action text not allow empty value."
+execute: Execute
+save: Save
+cancel: Cancel
+multiselect_choose: Choose
+filter_submit_button: Filter
+multiselect_selected: "{0} selected"
+per_page_submit: Change
+items_onPage: Items on page
+disable_is_active_filter: Vyhledat i v neaktivních
