@@ -350,7 +350,7 @@ trait GridFilterFormTrait
 		return $return;
 	}
 
-	protected function getTemplateFilename(): ?string
+	protected function getTemplateFile(): ?string
 	{
 		return __DIR__ . '/GridFilterForm.latte';
 	}

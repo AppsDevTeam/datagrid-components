@@ -1,1 +1,9 @@
-{control grid}
+{if $templateFile}
+	{import $templateFile}
+{/if}
+
+{ifset #grid}
+	{include #grid}
+{else}
+	{control grid}
+{/ifset}

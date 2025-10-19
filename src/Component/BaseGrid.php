@@ -45,7 +45,7 @@ abstract class BaseGrid extends Control
 
 	public function __construct()
 	{
-		$this->monitor(Presenter::class, function() {
+		$this->monitor(Presenter::class, function () {
 			$grid = $this->getGrid();
 
 			if (!method_exists($this, 'initGrid')) {
@@ -113,10 +113,7 @@ abstract class BaseGrid extends Control
 
 		$grid->setSortableHandler($this->getName() . '-sortRows!');
 
-		if ($grid->getTemplateFile() === $grid->getOriginalTemplateFile()) {
-			$_reflectionClass = new ReflectionClass($this);
-			$grid->setTemplateFile(dirname($_reflectionClass->getFileName()) . '/' . $_reflectionClass->getShortName() . '.latte');
-		}
+		$grid->setParentTemplate($this->getTemplateFile());
 
 		return $grid;
 	}
@@ -143,7 +140,8 @@ abstract class BaseGrid extends Control
 
 	public function render(): void
 	{
-		$this->template->setFile(__DIR__ . '/BaseGrid.latte')->render();
+		$this->getTemplate()->templateFile = $this->getTemplateFile();
+		$this->getTemplate()->setFile(__DIR__ . '/BaseGrid.latte')->render();
 	}
 
 	protected function getDataSourceFilterCallback(): ?Closure
@@ -164,7 +162,7 @@ abstract class BaseGrid extends Control
 
 			try {
 				$this->getPresenter()->{$methodName}($id);
-			} catch (InvalidLinkException | TypeError) {
+			} catch (InvalidLinkException|TypeError) {
 				$row = $this->createQueryObject()->byId($id)->getQuery()->getSingleResult();
 				if (is_array($row)) {
 					$entity = $row[0];
@@ -330,5 +328,10 @@ abstract class BaseGrid extends Control
 	public function getGridName(): string
 	{
 		return $this->getPresenter()->getName() . '-' . $this->getName();
+	}
+
+	protected function getTemplateFile(): ?string
+	{
+		return null;
 	}
 }

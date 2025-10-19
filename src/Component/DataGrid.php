@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ADT\Datagrid\Component;
 
-use ADT\BackgroundQueue\BackgroundQueue;
 use ADT\Datagrid\Model\Entities\GridExport;
 use ADT\Datagrid\Model\Export\Excel\ExportExcel;
 use ADT\Datagrid\Model\Queries\GridFilterQueryFactory;
@@ -42,11 +41,9 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		'ajax datagrid-edit'
 	];
 
-	protected BackgroundQueue $backgroundQueue;
 	protected GridFilterQueryFactory $gridFilterQueryFactory;
 	protected EntityManager $em;
 	protected DatagridService $datagridService;
-	public bool $strictSessionFilterValues = false;
 	protected string $templateType = self::TEMPLATE_DEFAULT;
 	protected array $classes = [];
 	protected array $htmlDataAttributes = [];
@@ -56,6 +53,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	protected string $gridName;
 	protected string $email;
 	private bool $isActiveValue = true;
+	protected ?string $parentTemplate = null;
 
 	public function getSessionData(?string $key = null, mixed $defaultValue = null): array
 	{
@@ -131,6 +129,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->template->toolbarButons = $this->toolbarButtons;
 		$this->template->isActiveValue = $this->isActiveValue;
 		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetch();
+		$this->template->parentTemplate = $this->parentTemplate;
 
 		parent::render();
 	}
@@ -607,25 +606,9 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $this->isActiveValue;
 	}
 
-	public function getTemplateFile(): string
+	public function setParentTemplate(?string $parentTemplate): static
 	{
-		$reflectionClass = new \ReflectionClass($this);
-		$templateName = $reflectionClass->getShortName() .'.latte';
-
-		$templateFile = dirname($reflectionClass->getFileName()) . '/' . $templateName;
-		if (file_exists($templateFile)) {
-			return $templateFile;
-		}
-
-		foreach ($reflectionClass->getInterfaces() as $_interface => $_interfaceReflectionClass) {
-			if (str_contains($_interface, $reflectionClass->getShortName())) {
-				$templateFile = dirname($_interfaceReflectionClass->getFileName()) . '/' . $templateName;
-				if (file_exists($templateFile)) {
-					return $templateFile;
-				}
-			}
-		}
-
-		return '';
+		$this->parentTemplate = $parentTemplate;
+		return $this;
 	}
 }
