@@ -1,40 +1,42 @@
-{form form}
-	{include errors}
+{define form}
+	{form form}
+		{include errors}
 
-	<div n:snippet="filterList" class="row row-filter">
-		{var $form = $control['form']}
-		{var ADT\Forms\DynamicContainer $valueDynamicContainer = $form['value']}
-		{foreach $valueDynamicContainer->getContainers() as $_container}
-			{include gridFilterTemplate, container => $_container}
-		{/foreach}
-	</div>
-
-	<button type="button" class="btn btn-secondary mb-4" data-adt-replicator-add-filter>
-		<i class="fa fa-plus-circle me-2"></i>Přidat filtr {* TODO TRANSLATE *}
-	</button>
-
-	{capture $stockContainer}
-		{include gridFilterTemplate container => $form['value']->getTemplate()}
-	{/capture}
-
-	<div class="row">
-		{formPair 'save'}
-	</div>
-
-	<div id="name-block" class="row">
-		{ifset $form['company']}
-			{formPair 'company'}
-		{/ifset}
-		{formPair 'name'}
-	</div>
-
-	<div class="row">
-		<div class="col-12">
-			{formPair 'submit'}
-			{formPair 'autoSubmit' class => 'd-none'}
+		<div n:snippet="filterList" class="row row-filter">
+			{var $form = $control['form']}
+			{var ADT\Forms\DynamicContainer $valueDynamicContainer = $form['value']}
+			{foreach $valueDynamicContainer->getContainers() as $_container}
+				{include gridFilterTemplate, container => $_container}
+			{/foreach}
 		</div>
-	</div>
-{/form}
+
+		<button type="button" class="btn btn-secondary mb-4" data-adt-replicator-add-filter>
+			<i class="fa fa-plus-circle me-2"></i>Přidat filtr {* TODO TRANSLATE *}
+		</button>
+
+		{capture $stockContainer}
+			{include gridFilterTemplate container => $form['value']->getTemplate()}
+		{/capture}
+
+		<div class="row">
+			{formPair 'save'}
+		</div>
+
+		<div id="name-block" class="row">
+			{ifset $form['company']}
+				{formPair 'company'}
+			{/ifset}
+			{formPair 'name'}
+		</div>
+
+		<div class="row">
+			<div class="col-12">
+				{formPair 'submit'}
+				{formPair 'autoSubmit' class => 'd-none'}
+			</div>
+		</div>
+	{/form}
+{/define}
 
 {define gridFilterTemplate}
 	{formContainer $container}
