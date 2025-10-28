@@ -101,6 +101,8 @@ trait GridFilterFormTrait
 	 */
 	public function initForm(\ADT\DoctrineForms\Form $form, ?GridFilter $gridFilter): void
 	{
+		ini_set('memory_limit', '1G');
+
 		$defaults = [];
 		if (!$gridFilter) {
 			$defaults['value'] = !empty($this->grid->getGrid()->getParameters()['filter']['advancedSearch'])
@@ -127,15 +129,15 @@ trait GridFilterFormTrait
 				->setRequired()
 				->setPrompt('---');
 
-			$container->addSection(function() use ($container, $gridFilter, $form, $defaults, $filterList) {
-				if ($gridFilter) {
-					$form->mapToForm();
-				} else {
-					$form->setDefaults($defaults);
-				}
+			if ($gridFilter) {
+				$form->mapToForm();
+			} else {
+				$form->setDefaults($defaults);
+			}
 
-				$selectedType = $filterList[$container->getUntrustedValues()->label]['type'] ?? null;
+			$selectedType = $filterList[$container->getUntrustedValues()->label]['type'] ?? null;
 
+			$container->addSection(function() use ($container, $gridFilter, $form, $defaults, $filterList, $selectedType) {
 				switch ($selectedType) {
 					case null:
 						$container->addHidden('operator');
@@ -199,82 +201,83 @@ trait GridFilterFormTrait
 
 						break;
 				}
+			}, name: 'operator', watchForRedraw: [$container['label']]);
 
-				$container->addSection(function () use ($container, $filterList, $selectedType) {
-					if ($container['label']->getValue()) {
-						$operatorValue = $container['operator']->getValue();
-						if ($operatorValue) {
-							if (
-								$selectedType !== self::F_TYPES['list'] &&
-								($operatorValue === self::EVO_API['sIsNull'] || $operatorValue === self::EVO_API['sIsNotNull'])
-							) {
-								$container->addHidden('value', '');
-							} else {
-								$isBetween = $operatorValue === self::EVO_API['sBetween'] || $operatorValue === self::EVO_API['sNotBetween'];
+			$container->addSection(function () use ($container, $filterList, $selectedType) {
+				if ($container['label']->getValue()) {
+					$operatorValue = $container['operator']->getValue();
+					if ($operatorValue) {
+						if (
+							$selectedType !== self::F_TYPES['list'] &&
+							($operatorValue === self::EVO_API['sIsNull'] || $operatorValue === self::EVO_API['sIsNotNull'])
+						) {
+							$container->addHidden('value', '');
+						} else {
+							$isBetween = $operatorValue === self::EVO_API['sBetween'] || $operatorValue === self::EVO_API['sNotBetween'];
 
-								switch ($selectedType) {
-									case self::F_TYPES['bool']:
-										$container->addSelect('value', null, [
-											1 => self::TRANSLATIONS['yes'],
-											0 => self::TRANSLATIONS['no'],
-										]);
-										break;
+							switch ($selectedType) {
+								case self::F_TYPES['bool']:
+									$container->addSelect('value', null, [
+										1 => self::TRANSLATIONS['yes'],
+										0 => self::TRANSLATIONS['no'],
+									]);
+									break;
 
-									case self::F_TYPES['list']:
-									case self::F_TYPES['listOpts']:
-									case self::F_TYPES['listDropdown']:
-										$container->addMultiSelect(
-											'value',
-											null,
-											$this->parseListItems($filterList[$container->getValues()->label]['list'])
-										)->setRequired();
-										break;
+								case self::F_TYPES['list']:
+								case self::F_TYPES['listOpts']:
+								case self::F_TYPES['listDropdown']:
+									$container->addMultiSelect(
+										'value',
+										null,
+										$this->parseListItems($filterList[$container['label']->getValue()]['list'])
+									)->setRequired();
+									break;
 
-									case self::F_TYPES['date']:
-									case self::F_TYPES['time']:
-									case self::F_TYPES['number']:
-										$type = ($selectedType === self::F_TYPES['date']) ? 'datetime' : 'text';
-										$container->{'add' . ucfirst($type)}('value')
+								case self::F_TYPES['date']:
+								case self::F_TYPES['time']:
+								case self::F_TYPES['number']:
+									$type = ($selectedType === self::F_TYPES['date']) ? 'datetime' : 'text';
+									$container->{'add' . ucfirst($type)}('value')
+										->setRequired();
+
+									if ($isBetween) {
+										$container->{'add' . ucfirst($type)}('value2')
 											->setRequired();
+									}
 
-										if ($isBetween) {
-											$container->{'add' . ucfirst($type)}('value2')
-												->setRequired();
-										}
+									break;
 
-										break;
+								default:
+									$container->addText('value')
+										->setRequired();
 
-									default:
-										$container->addText('value')
-											->setRequired();
-
-										if ($operatorValue === self::EVO_API['sInList']) {
-											$container->addText('delimiter', 'Oddělovač') // TODO překlady
-											->setRequired()
-												->setHtmlAttribute('placeholder', 'Oddělovač'); // TODO překlady
-										}
-								}
+									if ($operatorValue === self::EVO_API['sInList']) {
+										$container->addText('delimiter', 'Oddělovač') // TODO překlady
+										->setRequired()
+											->setHtmlAttribute('placeholder', 'Oddělovač'); // TODO překlady
+									}
 							}
 						}
-					} else {
-						$container->addHidden('value');
 					}
-				}, name: 'value', watchForRedraw: [$container['operator']]);
-			}, name: 'operator', watchForRedraw: [$container['label']]);
+				} else {
+					$container->addHidden('value');
+				}
+			}, name: 'value', watchForRedraw: [$container['operator']]);
+
 		}, isRequiredMessage: 'Zadejte alespoň 1 filtr.'); // TODO translate
 
-		$form->addCheckbox('save', 'Uložit') // TODO translate
-			->addCondition(Form::Equal, true)
-				->toggle('name-block');
+		$form->addCheckbox('save', 'Uložit'); // TODO translate
 		if ($gridFilter) {
 			$form['save']->setDefaultValue(1);
 		}
 
 		$form->addSection(function() use ($form) {
 			$form->addText('name', 'Název')// TODO translate
-			->addConditionOn($form['save'], Form::Equal, true)
-				->setRequired();
-		}, name: 'name-block');
+				->addConditionOn($form['save'], Form::Equal, true)
+					->setRequired();
+		}, name: 'name');
+		$form['save']->addCondition(Form::Equal, true)
+			->toggle($form->getSections()['name']->getHtmlId());
 
 		$form->addSubmit("submit", "app.forms.favouriteProduct.labels.submit");
 
