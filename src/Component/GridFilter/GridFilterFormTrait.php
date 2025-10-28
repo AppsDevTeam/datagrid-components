@@ -127,154 +127,156 @@ trait GridFilterFormTrait
 				->setRequired()
 				->setPrompt('---');
 
-			if ($gridFilter) {
-				$form->mapToForm();
-			} else {
-				$form->setDefaults($defaults);
-			}
-
-			$selectedType = $filterList[$container->getUntrustedValues()->label]['type'] ?? null;
-
-			switch ($selectedType) {
-				case self::F_TYPES['list']:
-					$container->addHidden('operator', self::EVO_API['sInList'])
-						->setValue(self::EVO_API['sInList']);
-					break;
-
-				case self::F_TYPES['listOpts']:
-				case self::F_TYPES['listDropdown']:
-				case self::F_TYPES['bool']:
-					$container->addHidden('operator', self::EVO_API['sEqual'])
-						->setValue(self::EVO_API['sEqual']);
-					break;
-
-				default:
-					$operatorItems = [];
-
-					switch ($selectedType) {
-						case self::F_TYPES['date']:
-						case self::F_TYPES['time']:
-							if ($selectedType === self::F_TYPES['time']) {
-								$operatorItems[self::EVO_API['sEqual']] = self::TRANSLATIONS['sAt'];
-								$operatorItems[self::EVO_API['sNotEqual']] = self::TRANSLATIONS['sNotAt'];
-							} else {
-								$operatorItems[self::EVO_API['sEqual']] = self::TRANSLATIONS['sOn'];
-								$operatorItems[self::EVO_API['sNotEqual']] = self::TRANSLATIONS['sNotOn'];
-							}
-
-							$operatorItems[self::EVO_API['sGreater']] = self::TRANSLATIONS['sAfter'];
-							$operatorItems[self::EVO_API['sSmaller']] = self::TRANSLATIONS['sBefore'];
-							$operatorItems[self::EVO_API['sBetween']] = self::TRANSLATIONS['sBetween'];
-							$operatorItems[self::EVO_API['sNotBetween']] = self::TRANSLATIONS['sNotBetween'];
-							break;
-
-						case self::F_TYPES['number']:
-							$operatorItems[self::EVO_API['sEqual']] = self::TRANSLATIONS['sNumEqual'];
-							$operatorItems[self::EVO_API['sNotEqual']] = self::TRANSLATIONS['sNumNotEqual'];
-							$operatorItems[self::EVO_API['sGreater']] = self::TRANSLATIONS['sGreater'];
-							$operatorItems[self::EVO_API['sSmaller']] = self::TRANSLATIONS['sSmaller'];
-							break;
-
-						default:
-							$operatorItems[self::EVO_API['sEqual']] = self::TRANSLATIONS['sEqual'];
-							$operatorItems[self::EVO_API['sNotEqual']] = self::TRANSLATIONS['sNotEqual'];
-							$operatorItems[self::EVO_API['sStart']] = self::TRANSLATIONS['sStart'];
-							$operatorItems[self::EVO_API['sContain']] = self::TRANSLATIONS['sContain'];
-							$operatorItems[self::EVO_API['sNotContain']] = self::TRANSLATIONS['sNotContain'];
-							$operatorItems[self::EVO_API['sFinish']] = self::TRANSLATIONS['sFinish'];
-							$operatorItems[self::EVO_API['sInList']] = self::TRANSLATIONS['sInList'];
-					}
-
-					$operatorItems[self::EVO_API['sIsNull']] = self::TRANSLATIONS['sIsNull'];
-					$operatorItems[self::EVO_API['sIsNotNull']] = self::TRANSLATIONS['sIsNotNull'];
-					break;
-			}
-
-			if ($container['label']->getValue()) {
-				if (isset($operatorItems)) {
-					$container->addSelect('operator', '', $operatorItems) // TODO translate
-					->setPrompt('---')
-						->setRequired();
+			$container->addSection(function() use ($container, $gridFilter, $form, $defaults, $filterList) {
+				if ($gridFilter) {
+					$form->mapToForm();
+				} else {
+					$form->setDefaults($defaults);
 				}
 
-				$operatorValue = $container['operator']->getValue();
+				$selectedType = $filterList[$container->getUntrustedValues()->label]['type'] ?? null;
 
-				if ($operatorValue) {
-					if (
-						$selectedType !== self::F_TYPES['list'] &&
-						($operatorValue === self::EVO_API['sIsNull'] || $operatorValue === self::EVO_API['sIsNotNull'])
-					) {
-						$container->addHidden('value', '');
-					} else {
-						$isBetween = $operatorValue === self::EVO_API['sBetween'] || $operatorValue === self::EVO_API['sNotBetween'];
+				switch ($selectedType) {
+					case null:
+						$container->addHidden('operator');
+						break;
+
+					case self::F_TYPES['list']:
+						$container->addHidden('operator', self::EVO_API['sInList'])
+							->setValue(self::EVO_API['sInList']);
+						break;
+
+					case self::F_TYPES['listOpts']:
+					case self::F_TYPES['listDropdown']:
+					case self::F_TYPES['bool']:
+						$container->addHidden('operator', self::EVO_API['sEqual'])
+							->setValue(self::EVO_API['sEqual']);
+						break;
+
+					default:
+						$operatorItems = [];
 
 						switch ($selectedType) {
-							case self::F_TYPES['bool']:
-								$container->addSelect('value', null, [
-									1 => self::TRANSLATIONS['yes'],
-									0 => self::TRANSLATIONS['no'],
-								]);
-								break;
-
-							case self::F_TYPES['list']:
-							case self::F_TYPES['listOpts']:
-							case self::F_TYPES['listDropdown']:
-								$container->addMultiSelect(
-									'value',
-									null,
-									$this->parseListItems($filterList[$container->getValues()->label]['list'])
-								)->setRequired();
-								break;
-
 							case self::F_TYPES['date']:
 							case self::F_TYPES['time']:
-							case self::F_TYPES['number']:
-								$type = ($selectedType === self::F_TYPES['date']) ? 'datetime' : 'text';
-								$container->{'add' . ucfirst($type)}('value')
-									->setRequired();
-
-								if ($isBetween) {
-									$container->{'add' . ucfirst($type)}('value2')
-										->setRequired();
+								if ($selectedType === self::F_TYPES['time']) {
+									$operatorItems[self::EVO_API['sEqual']] = self::TRANSLATIONS['sAt'];
+									$operatorItems[self::EVO_API['sNotEqual']] = self::TRANSLATIONS['sNotAt'];
+								} else {
+									$operatorItems[self::EVO_API['sEqual']] = self::TRANSLATIONS['sOn'];
+									$operatorItems[self::EVO_API['sNotEqual']] = self::TRANSLATIONS['sNotOn'];
 								}
 
+								$operatorItems[self::EVO_API['sGreater']] = self::TRANSLATIONS['sAfter'];
+								$operatorItems[self::EVO_API['sSmaller']] = self::TRANSLATIONS['sBefore'];
+								$operatorItems[self::EVO_API['sBetween']] = self::TRANSLATIONS['sBetween'];
+								$operatorItems[self::EVO_API['sNotBetween']] = self::TRANSLATIONS['sNotBetween'];
+								break;
+
+							case self::F_TYPES['number']:
+								$operatorItems[self::EVO_API['sEqual']] = self::TRANSLATIONS['sNumEqual'];
+								$operatorItems[self::EVO_API['sNotEqual']] = self::TRANSLATIONS['sNumNotEqual'];
+								$operatorItems[self::EVO_API['sGreater']] = self::TRANSLATIONS['sGreater'];
+								$operatorItems[self::EVO_API['sSmaller']] = self::TRANSLATIONS['sSmaller'];
 								break;
 
 							default:
-								$container->addText('value')
-									->setRequired();
-
-								if ($operatorValue === self::EVO_API['sInList']) {
-									$container->addText('delimiter', 'Oddělovač') // TODO překlady
-									->setRequired()
-										->setHtmlAttribute('placeholder', 'Oddělovač'); // TODO překlady
-								}
+								$operatorItems[self::EVO_API['sEqual']] = self::TRANSLATIONS['sEqual'];
+								$operatorItems[self::EVO_API['sNotEqual']] = self::TRANSLATIONS['sNotEqual'];
+								$operatorItems[self::EVO_API['sStart']] = self::TRANSLATIONS['sStart'];
+								$operatorItems[self::EVO_API['sContain']] = self::TRANSLATIONS['sContain'];
+								$operatorItems[self::EVO_API['sNotContain']] = self::TRANSLATIONS['sNotContain'];
+								$operatorItems[self::EVO_API['sFinish']] = self::TRANSLATIONS['sFinish'];
+								$operatorItems[self::EVO_API['sInList']] = self::TRANSLATIONS['sInList'];
 						}
-					}
+
+						$operatorItems[self::EVO_API['sIsNull']] = self::TRANSLATIONS['sIsNull'];
+						$operatorItems[self::EVO_API['sIsNotNull']] = self::TRANSLATIONS['sIsNotNull'];
+
+						$container->addSelect('operator', '', $operatorItems) // TODO translate
+							->setPrompt('---')
+							->setRequired();
+
+						break;
 				}
-			} else {
-				$container->addHidden('value');
-			}
+
+				$container->addSection(function () use ($container, $filterList, $selectedType) {
+					if ($container['label']->getValue()) {
+						$operatorValue = $container['operator']->getValue();
+						if ($operatorValue) {
+							if (
+								$selectedType !== self::F_TYPES['list'] &&
+								($operatorValue === self::EVO_API['sIsNull'] || $operatorValue === self::EVO_API['sIsNotNull'])
+							) {
+								$container->addHidden('value', '');
+							} else {
+								$isBetween = $operatorValue === self::EVO_API['sBetween'] || $operatorValue === self::EVO_API['sNotBetween'];
+
+								switch ($selectedType) {
+									case self::F_TYPES['bool']:
+										$container->addSelect('value', null, [
+											1 => self::TRANSLATIONS['yes'],
+											0 => self::TRANSLATIONS['no'],
+										]);
+										break;
+
+									case self::F_TYPES['list']:
+									case self::F_TYPES['listOpts']:
+									case self::F_TYPES['listDropdown']:
+										$container->addMultiSelect(
+											'value',
+											null,
+											$this->parseListItems($filterList[$container->getValues()->label]['list'])
+										)->setRequired();
+										break;
+
+									case self::F_TYPES['date']:
+									case self::F_TYPES['time']:
+									case self::F_TYPES['number']:
+										$type = ($selectedType === self::F_TYPES['date']) ? 'datetime' : 'text';
+										$container->{'add' . ucfirst($type)}('value')
+											->setRequired();
+
+										if ($isBetween) {
+											$container->{'add' . ucfirst($type)}('value2')
+												->setRequired();
+										}
+
+										break;
+
+									default:
+										$container->addText('value')
+											->setRequired();
+
+										if ($operatorValue === self::EVO_API['sInList']) {
+											$container->addText('delimiter', 'Oddělovač') // TODO překlady
+											->setRequired()
+												->setHtmlAttribute('placeholder', 'Oddělovač'); // TODO překlady
+										}
+								}
+							}
+						}
+					} else {
+						$container->addHidden('value');
+					}
+				}, name: 'value', watchForRedraw: [$container['operator']]);
+			}, name: 'operator', watchForRedraw: [$container['label']]);
 		}, isRequiredMessage: 'Zadejte alespoň 1 filtr.'); // TODO translate
 
 		$form->addCheckbox('save', 'Uložit') // TODO translate
-		->addCondition(Form::Equal, true)
-			->toggle('name-block');
-
+			->addCondition(Form::Equal, true)
+				->toggle('name-block');
 		if ($gridFilter) {
 			$form['save']->setDefaultValue(1);
 		}
 
-		$form->addText('name', 'Název')// TODO translate
-		->addConditionOn($form['save'], Form::Equal, true)
-			->setRequired();
+		$form->addSection(function() use ($form) {
+			$form->addText('name', 'Název')// TODO translate
+			->addConditionOn($form['save'], Form::Equal, true)
+				->setRequired();
+		}, name: 'name-block');
 
 		$form->addSubmit("submit", "app.forms.favouriteProduct.labels.submit");
-		$form->addSubmit("autoSubmit", "app.forms.favouriteProduct.labels.submit")
-			->setValidationScope([])
-			->onClick[] = function () {
-			$this->redrawControl('filterList');
-		};
 
 		if (!$gridFilter) {
 			$form->setDefaults($defaults);
