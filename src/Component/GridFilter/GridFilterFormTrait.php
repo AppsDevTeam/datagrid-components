@@ -262,7 +262,7 @@ trait GridFilterFormTrait
 				} else {
 					$container->addHidden('value');
 				}
-			}, name: 'value', watchForRedraw: [$container['operator']]);
+			}, name: 'value', watchForRedraw: [$container['label'], $container['operator']]);
 
 		}, isRequiredMessage: 'Zadejte alespoň 1 filtr.'); // TODO translate
 
