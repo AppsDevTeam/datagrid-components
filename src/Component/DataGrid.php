@@ -601,6 +601,12 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetchPairs('name', 'id');
 	}
 
+	public function setIsActiveValue($value): static
+	{
+		$this->isActiveValue = $value;
+		return $this;
+	}
+
 	public function getIsActiveValue(): bool
 	{
 		return $this->isActiveValue;
