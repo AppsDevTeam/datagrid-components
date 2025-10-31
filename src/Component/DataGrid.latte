@@ -306,7 +306,11 @@
 					<tbody n:snippet="tbody" {if $control->isSortable()}data-sortable data-sortable-url="{plink $control->getSortableHandler()}" data-sortable-parent-path="{$control->getSortableParentPath()}"{/}>
 						{snippetArea items}
 							{if $inlineAdd && $inlineAdd->isPositionTop()}
-								{include inlineAddRow, columns => $columns}
+								{ifset #inlineAddRow}
+									{include inlineAddRow, columns => $columns}
+								{else}
+									{include defaultInlineAddRow columns => $columns}
+								{/ifset}
 							{/if}
 							{foreach $rows as $row}
 
@@ -441,7 +445,11 @@
 							{/foreach}
 
 							{if $inlineAdd && $inlineAdd->isPositionBottom()}
-								{include inlineAddRow, columns => $columns}
+								{ifset #inlineAddRow}
+									{include inlineAddRow, columns => $columns}
+								{else}
+									{include defaultInlineAddRow columns => $columns}
+								{/ifset}
 							{/if}
 
 							<tr class="datagrid-row-columns-summary" n:if="!empty($rows) && ($columnsSummary || $control->hasSomeAggregationFunction())" n:snippet="summary">
@@ -539,7 +547,7 @@
 	{/if}
 {/define}
 
-{define inlineAddRow}
+{define defaultInlineAddRow}
 	{php $inlineAdd->onSetDefaults($filter['inline_add'])}
 
 	<tr class="datagrid-row-inline-add datagrid-row-inline-add-hidden">
