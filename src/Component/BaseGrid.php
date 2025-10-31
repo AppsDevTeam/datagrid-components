@@ -281,6 +281,7 @@ abstract class BaseGrid extends Control
 			|| isset($grid->getColumns()['isActive'])
 			|| !$metadata->hasField('isActive')
 		) {
+			$grid->setIsActiveValue(false);
 			return;
 		}
 
