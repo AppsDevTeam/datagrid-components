@@ -342,6 +342,7 @@ trait GridFilterFormTrait
 		$grid = $this->grid->getGrid();
 		$grid->setFilter($filters);
 		$grid->handleRefreshState();
+		$grid->redrawControl(redraw: false);
 	}
 
 	protected function parseListItems(array $list): array

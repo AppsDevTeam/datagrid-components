@@ -242,10 +242,8 @@ abstract class BaseGrid extends Control
 			$this->getEntityManager()->remove($entity);
 			$this->getEntityManager()->flush();
 			$this->getPresenter()->flashMessageSuccess('action.delete.yes');
-			$this->getGrid()->redrawControl();
 		} else {
 			$this->getPresenter()->flashMessageError('app.grids.flashes.cantDelete');
-			$this->getPresenter()->redrawControl('flashes');
 		}
 	}
 

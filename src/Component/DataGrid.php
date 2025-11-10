@@ -525,7 +525,6 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	public function reload(array $snippets = []): void
 	{
 		if ($this->getPresenter()->isAjax()) {
-			$this->redrawControl('advanced-filter');
 			parent::reload($snippets);
 		} else {
 			$this->getPresenter()->redirect('this');
