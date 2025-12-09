@@ -131,13 +131,6 @@ abstract class BaseGrid extends Control
 		return $this['grid'];
 	}
 
-	protected function initQueryObject($queryObject): void
-	{
-		if ($queryObject instanceof IsActiveFilter) {
-			$queryObject->disableIsActiveFilter();
-		}
-	}
-
 	public function render(): void
 	{
 		$this->getTemplate()->templateFile = $this->getTemplateFile();
