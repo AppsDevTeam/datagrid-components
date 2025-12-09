@@ -131,6 +131,10 @@ abstract class BaseGrid extends Control
 		return $this['grid'];
 	}
 
+	protected function initQueryObject($queryObject): void
+	{
+	}
+
 	public function render(): void
 	{
 		$this->getTemplate()->templateFile = $this->getTemplateFile();
