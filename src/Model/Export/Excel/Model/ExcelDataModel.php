@@ -52,7 +52,11 @@ class ExcelDataModel
 		$row = [];
 
 		foreach ($this->columns as $column) {
-			$row[] = strip_tags((string) $column->render($item));
+			$render = $column->render($item);
+			if (is_array($render)) {
+				$render = implode(', ', $render);
+			}
+			$row[] = strip_tags((string) $render);
 		}
 
 		return $row;
