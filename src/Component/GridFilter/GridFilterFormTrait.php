@@ -11,6 +11,7 @@ use ADT\Forms\StaticContainer;
 use Exception;
 use Nette\Application\UI\Presenter;
 use Nette\ComponentModel\IComponent;
+use Nette\Forms\Controls\HiddenField;
 use Nette\Forms\Form;
 use Nette\Utils\Json;
 use Nette\Utils\JsonException;
@@ -143,119 +144,126 @@ trait GridFilterFormTrait
 						$container->addHidden('operator');
 						break;
 
-					case self::F_TYPES['list']:
-						$container->addHidden('operator', self::EVO_API['sInList'])
-							->setValue(self::EVO_API['sInList']);
+					case 'select':
+					case 'multi-select':
+						$container->addHidden('operator')
+							->setValue(self::EVO_API['sEqual']);
+						break;
+						
+					case 'date-range':
+						$operatorItems[self::EVO_API['sIsNull']] = self::TRANSLATIONS['sIsNull'];
+						$operatorItems[self::EVO_API['sIsNotNull']] = self::TRANSLATIONS['sIsNotNull'];
+						$operatorItems[self::EVO_API['sSmaller']] = self::TRANSLATIONS['sSmaller'];
+						$operatorItems[self::EVO_API['sGreater']] = self::TRANSLATIONS['sGreater'];
+						$operatorItems[self::EVO_API['sBetween']] = self::TRANSLATIONS['sBetween'];
+						$operatorItems[self::EVO_API['sNotBetween']] = self::TRANSLATIONS['sNotBetween'];
+						$container->addSelect('operator', null, $operatorItems)
+							->setPrompt('---')
+							->setRequired();
 						break;
 
-					case self::F_TYPES['listOpts']:
-					case self::F_TYPES['listDropdown']:
-					case self::F_TYPES['bool']:
-						$container->addHidden('operator', self::EVO_API['sEqual'])
-							->setValue(self::EVO_API['sEqual']);
+					case 'range':
+					case 'date':
+						$operatorItems[self::EVO_API['sEqual']] = self::TRANSLATIONS['sEqual'];
+						$operatorItems[self::EVO_API['sNotEqual']] = self::TRANSLATIONS['sNotEqual'];
+						$operatorItems[self::EVO_API['sIsNull']] = self::TRANSLATIONS['sIsNull'];
+						$operatorItems[self::EVO_API['sIsNotNull']] = self::TRANSLATIONS['sIsNotNull'];
+						$operatorItems[self::EVO_API['sSmaller']] = self::TRANSLATIONS['sSmaller'];
+						$operatorItems[self::EVO_API['sGreater']] = self::TRANSLATIONS['sGreater'];
+						$operatorItems[self::EVO_API['sBetween']] = self::TRANSLATIONS['sBetween'];
+						$operatorItems[self::EVO_API['sNotBetween']] = self::TRANSLATIONS['sNotBetween'];
+						$container->addSelect('operator', null, $operatorItems)
+							->setPrompt('---')
+							->setRequired();
+						break;
+
+					case 'text':
+						$operatorItems[self::EVO_API['sEqual']] = self::TRANSLATIONS['sEqual'];
+						$operatorItems[self::EVO_API['sNotEqual']] = self::TRANSLATIONS['sNotEqual'];
+						$operatorItems[self::EVO_API['sStart']] = self::TRANSLATIONS['sStart'];
+						$operatorItems[self::EVO_API['sContain']] = self::TRANSLATIONS['sContain'];
+						$operatorItems[self::EVO_API['sNotContain']] = self::TRANSLATIONS['sNotContain'];
+						$operatorItems[self::EVO_API['sFinish']] = self::TRANSLATIONS['sFinish'];
+						$operatorItems[self::EVO_API['sInList']] = self::TRANSLATIONS['sInList'];
+						$operatorItems[self::EVO_API['sIsNull']] = self::TRANSLATIONS['sIsNull'];
+						$operatorItems[self::EVO_API['sIsNotNull']] = self::TRANSLATIONS['sIsNotNull'];
+						$container->addSelect('operator', null, $operatorItems)
+							->setPrompt('---')
+							->setRequired();
 						break;
 
 					default:
-						$operatorItems = [];
-
-						switch ($selectedType) {
-							case self::F_TYPES['date']:
-							case self::F_TYPES['time']:
-								if ($selectedType === self::F_TYPES['time']) {
-									$operatorItems[self::EVO_API['sEqual']] = self::TRANSLATIONS['sAt'];
-									$operatorItems[self::EVO_API['sNotEqual']] = self::TRANSLATIONS['sNotAt'];
-								} else {
-									$operatorItems[self::EVO_API['sEqual']] = self::TRANSLATIONS['sOn'];
-									$operatorItems[self::EVO_API['sNotEqual']] = self::TRANSLATIONS['sNotOn'];
-								}
-
-								$operatorItems[self::EVO_API['sGreater']] = self::TRANSLATIONS['sAfter'];
-								$operatorItems[self::EVO_API['sSmaller']] = self::TRANSLATIONS['sBefore'];
-								$operatorItems[self::EVO_API['sBetween']] = self::TRANSLATIONS['sBetween'];
-								$operatorItems[self::EVO_API['sNotBetween']] = self::TRANSLATIONS['sNotBetween'];
-								break;
-
-							case self::F_TYPES['number']:
-								$operatorItems[self::EVO_API['sEqual']] = self::TRANSLATIONS['sNumEqual'];
-								$operatorItems[self::EVO_API['sNotEqual']] = self::TRANSLATIONS['sNumNotEqual'];
-								$operatorItems[self::EVO_API['sGreater']] = self::TRANSLATIONS['sGreater'];
-								$operatorItems[self::EVO_API['sSmaller']] = self::TRANSLATIONS['sSmaller'];
-								break;
-
-							default:
-								$operatorItems[self::EVO_API['sEqual']] = self::TRANSLATIONS['sEqual'];
-								$operatorItems[self::EVO_API['sNotEqual']] = self::TRANSLATIONS['sNotEqual'];
-								$operatorItems[self::EVO_API['sStart']] = self::TRANSLATIONS['sStart'];
-								$operatorItems[self::EVO_API['sContain']] = self::TRANSLATIONS['sContain'];
-								$operatorItems[self::EVO_API['sNotContain']] = self::TRANSLATIONS['sNotContain'];
-								$operatorItems[self::EVO_API['sFinish']] = self::TRANSLATIONS['sFinish'];
-								$operatorItems[self::EVO_API['sInList']] = self::TRANSLATIONS['sInList'];
-						}
-
-						$operatorItems[self::EVO_API['sIsNull']] = self::TRANSLATIONS['sIsNull'];
-						$operatorItems[self::EVO_API['sIsNotNull']] = self::TRANSLATIONS['sIsNotNull'];
-
-						$container->addSelect('operator', '', $operatorItems) // TODO translate
-							->setPrompt('---')
-							->setRequired();
-
-						break;
+						throw new Exception('Unknown filter type: ' . $selectedType);
 				}
 			}, name: 'operator', watchForRedraw: [$container['label']]);
 
 			$container->addSection(function () use ($container, $filterList, $selectedType) {
 				if ($container['label']->getValue()) {
-					$operatorValue = $container['operator']->getValue();
-					if ($operatorValue) {
-						if (
-							$selectedType !== self::F_TYPES['list'] &&
-							($operatorValue === self::EVO_API['sIsNull'] || $operatorValue === self::EVO_API['sIsNotNull'])
-						) {
+					if ($operatorValue = $container['operator']->getValue()) {
+						if ($operatorValue === self::EVO_API['sIsNull'] || $operatorValue === self::EVO_API['sIsNotNull'] || !$operatorValue) {
 							$container->addHidden('value', '');
 						} else {
 							$isBetween = $operatorValue === self::EVO_API['sBetween'] || $operatorValue === self::EVO_API['sNotBetween'];
 
 							switch ($selectedType) {
-								case self::F_TYPES['bool']:
+								case 'checkbox':
 									$container->addSelect('value', null, [
 										1 => self::TRANSLATIONS['yes'],
 										0 => self::TRANSLATIONS['no'],
-									]);
+									])
+										->setPrompt('---');
 									break;
 
-								case self::F_TYPES['list']:
-								case self::F_TYPES['listOpts']:
-								case self::F_TYPES['listDropdown']:
+								case 'select':
+									$container->addSelect(
+										'value',
+										null,
+										$this->parseListItems($filterList[$container['label']->getValue()]['list'])
+									)->setPrompt('---');
+									break;
+
+								case 'multi-select':
 									$container->addMultiSelect(
 										'value',
 										null,
 										$this->parseListItems($filterList[$container['label']->getValue()]['list'])
-									)->setRequired();
+									);
 									break;
 
-								case self::F_TYPES['date']:
-								case self::F_TYPES['time']:
-								case self::F_TYPES['number']:
-									$type = ($selectedType === self::F_TYPES['date']) ? 'datetime' : 'text';
-									$container->{'add' . ucfirst($type)}('value')
+								case 'date':
+									$container->addDate('value')
 										->setRequired();
-
 									if ($isBetween) {
-										$container->{'add' . ucfirst($type)}('value2')
+										$container->addDate('value2')
 											->setRequired();
 									}
+									break;
 
+								case 'date-range':
+									$container->addDateTime('value')
+										->setRequired();
+									if ($isBetween) {
+										$container->addDateTime('value2')
+											->setRequired();
+									}
+									break;
+
+								case 'range':
+									$container->addText('value')
+										->setRequired();
+									if ($isBetween) {
+										$container->addText('value2')
+											->setRequired();
+									}
+									break;
+
+								case 'text':
+									$container->addText('value')
+										->setRequired();
 									break;
 
 								default:
-									$container->addText('value')
-										->setRequired();
-
-									if ($operatorValue === self::EVO_API['sInList']) {
-										$container->addText('delimiter', 'Oddělovač') // TODO překlady
-										->setRequired()
-											->setHtmlAttribute('placeholder', 'Oddělovač'); // TODO překlady
-									}
+									throw new Exception('Unknown filter type: ' . $selectedType);
 							}
 						}
 					}

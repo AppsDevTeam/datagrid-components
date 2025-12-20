@@ -502,11 +502,15 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 			$this->getFilter($label)->setValue($value);
 			$column = array_keys($this->getFilter($label)->getCondition());
 
-			$query->by(
-				(!empty($column) ? $column : $label),
-				$value,
-				$operatorMap[$searchFilter['operator']] ?? QueryObjectByMode::EQUALS
-			);
+			if ($this->getFilter($label)->getConditionCallback()) {
+				$this->getFilter($label)->getConditionCallback()($query, $value);
+			} else {
+				$query->by(
+					(!empty($column) ? $column : $label),
+					$value,
+					$operatorMap[$searchFilter['operator']] ?? QueryObjectByMode::EQUALS
+				);
+			}
 		}
 	}
 
@@ -539,39 +543,19 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		unset ($filters[static::SELECTED_GRID_FILTER_KEY]);
 		$fields = [];
 		foreach ($filters as $_filter) {
-			$fields[] = ['id' => $_filter->getKey()];
-		}
+			$field = [
+				'id' => $_filter->getKey(),
+				'label' => $this->translator->translate($_filter->getName()),
+				'type' => $_filter->getType(),
+			];
 
-		foreach ($fields as &$field) {
-			$id = $field['id'];
-
-			if (!isset($this->columns[$id])) {
-				continue;
+			if ($_filter->getType() === 'select' || $_filter->getType() === 'multi-select') {
+				$field['list'] = array_map(function ($value, $key) {
+					return ['id' => $key, 'label' => $value];
+				}, $this->filters[$_filter->getKey()]->getOptions(), array_keys($this->filters[$_filter->getKey()]->getOptions()));
 			}
 
-			$column = $this->columns[$id];
-
-			if (!empty($column)) {
-				if (empty($field['type'])) {
-					$field['type'] = 'text';
-
-					if (!empty($this->filters[$id]) && $this->filters[$id] instanceof FilterSelect) {
-						$field['type'] = 'list';
-						$options = $this->filters[$id]->getOptions();
-						$field['list'] = array_map(function ($value, $key) {
-							return ['id' => $key, 'label' => $value];
-						}, $options, array_keys($options));
-					}
-
-					if ($column instanceof ColumnDateTime) {
-						$field['type'] = 'date';
-					} elseif ($column instanceof ColumnNumber) {
-						$field['type'] = 'number';
-					}
-				}
-
-				$field['label'] = $this->translator->translate($column->getName());
-			}
+			$fields[] = $field;
 		}
 
 		return $fields;

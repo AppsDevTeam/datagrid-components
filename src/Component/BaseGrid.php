@@ -120,9 +120,10 @@ abstract class BaseGrid extends Control
 
 	public function getYesNoOptions(): array
 	{
+		// TODO translate
 		return [
-			'0' => 'no',
-			'1' => 'yes'
+			'1' => 'ano',
+			'0' => 'ne',
 		];
 	}
 
