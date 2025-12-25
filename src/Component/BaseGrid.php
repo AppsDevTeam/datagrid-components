@@ -98,7 +98,7 @@ abstract class BaseGrid extends Control
 		}
 		$grid->setDataSource($queryObjectDataSource);
 
-		if ($this->allowEdit()) {
+		if ($this->allowEdit() && $this->getSecurityUser()->isAllowed($this->allowEdit()->getAcl())) {
 			$grid->addAction('edit', '')
 				->setIcon('edit')
 				->setClass('ajax datagrid-edit');
