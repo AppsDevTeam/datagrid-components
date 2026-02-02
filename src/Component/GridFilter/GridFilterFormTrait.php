@@ -147,9 +147,9 @@ trait GridFilterFormTrait
 					case 'select':
 					case 'multi-select':
 						$container->addHidden('operator')
-							->setValue(self::EVO_API['sEqual']);
+							->setValue(self::EVO_API['sInList']);
 						break;
-						
+
 					case 'date-range':
 						$operatorItems[self::EVO_API['sIsNull']] = self::TRANSLATIONS['sIsNull'];
 						$operatorItems[self::EVO_API['sIsNotNull']] = self::TRANSLATIONS['sIsNotNull'];
