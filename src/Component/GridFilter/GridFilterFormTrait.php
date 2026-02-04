@@ -126,6 +126,10 @@ trait GridFilterFormTrait
 				$columnItems[$filter['id']] = $filter['label'];
 			}
 
+			$values = $form->getValidatedValues('array');
+			$usedLabels = array_column($values['value'], 'label');
+			$columnItems = array_diff_key($columnItems, array_flip($usedLabels));
+			unset ($columnItems['isActive']);
 			$container->addSelect('label', '', $columnItems)
 				->setRequired()
 				->setPrompt('---');
@@ -145,6 +149,11 @@ trait GridFilterFormTrait
 						break;
 
 					case 'select':
+					case 'checkbox':
+						$container->addHidden('operator')
+							->setValue(self::EVO_API['sEqual']);
+						break;
+
 					case 'multi-select':
 						$container->addHidden('operator')
 							->setValue(self::EVO_API['sInList']);

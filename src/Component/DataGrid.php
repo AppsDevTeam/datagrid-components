@@ -483,9 +483,8 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 					$value = $value->format('Y-m-d H:i:s');
 				}
 
-				if ($operatorMap[$searchFilter['operator']] === QueryObjectByMode::IN_ARRAY && !is_array($value)) {
-					$delimiter = $searchFilter['delimiter'] ?? ',';
-					$value = explode($delimiter, $value);
+				if (isset($searchFilter['delimiter'])) {
+					$value = explode($searchFilter['delimiter'], $value);
 				}
 			}
 
