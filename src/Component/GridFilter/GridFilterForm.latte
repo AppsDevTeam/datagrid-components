@@ -3,12 +3,13 @@
 	{capture $stockContainer}
 		{include gridFilterTemplate container => $form['value']->getTemplate()}
 	{/capture}
-	<div data-adt-replicator="{$stockContainer|trim|noescape}" class="row row-filter">
+	<div data-adt-replicator="{$stockContainer|trim|noescape}" class="row row-filter" n:snippet="items">
+		{var $form = $control['form']}
 		{var ADT\Forms\DynamicContainer $valueDynamicContainer = $form['value']}
 		{foreach $valueDynamicContainer->getContainers() as $_container}
 			{include gridFilterTemplate, container => $_container}
 		{/foreach}
-		<button type="button" class="btn btn-secondary mb-4" data-adt-replicator-add>
+		<button n:name="addFilter" class="btn btn-secondary mb-4">
 			<i class="fa fa-plus-circle me-2"></i>Přidat filtr {* TODO TRANSLATE *}
 		</button>
 	</div>

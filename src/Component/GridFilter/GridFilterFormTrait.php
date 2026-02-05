@@ -297,6 +297,12 @@ trait GridFilterFormTrait
 			->toggle($form->getSections()['name']->getHtmlId());
 
 		$form->addSubmit("submit", "app.forms.favouriteProduct.labels.submit");
+		$form->addSubmit('addFilter')
+			->setValidationScope([])
+			->onClick[] = function () use ($form) {
+				$form['value']->createNew();
+				$this->redrawControl('items');
+			};
 
 		if (!$gridFilter) {
 			$form->setDefaults($defaults);
