@@ -258,7 +258,7 @@
 									</div>
 								{$th->endTag()|noescape}
 							{/foreach}
-							<th n:if="$actions || $control->isSortable() || $itemsDetail || $inlineEdit || $inlineAdd" class="col-action text-center">
+							<th n:if="$actions || $control->isSortable() || $inlineEdit || $inlineAdd" class="col-action text-center">
 								{*='ublaboo_datagrid.action'|translate*}
 							</th>
 						</tr>
@@ -286,7 +286,7 @@
 								{/if}
 								{$th->endTag()|noescape}
 							{/foreach}
-							<th n:if="$actions || $control->isSortable() || $itemsDetail || $inlineEdit || $inlineAdd" class="col-action text-center">
+							<th n:if="$actions || $control->isSortable() || $inlineEdit || $inlineAdd" class="col-action text-center">
 								{if !$control->hasAutoSubmit() && !$control->hasOuterFilterRendering()}
 									{input $filter['filter']['submit']}
 								{/if}
@@ -296,7 +296,7 @@
 							{include header_after}
 						{/ifset}
 						<tr>
-							<th class="table-header-divider" colspan="{count($columns) + ($actions || $control->isSortable() || $itemsDetail || $inlineEdit || $inlineAdd ? 1 : 0)}">
+							<th class="table-header-divider" colspan="{count($columns) + ($actions || $control->isSortable() || $inlineEdit || $inlineAdd ? 1 : 0)}">
 								<div></div>
 							</th>
 						</tr>
@@ -370,11 +370,8 @@
 													</div>
 												{$td->endTag()|noescape}
 											{/foreach}
-											<td n:if="$actions || $control->isSortable() || $itemsDetail || $inlineEdit || $inlineAdd" class="col-action dropdown">
+											<td n:if="$actions || $control->isSortable() || $inlineEdit || $inlineAdd" class="col-action dropdown">
 												<div>
-													{if $itemsDetail && $itemsDetail->shouldBeRendered($row)}
-														{$itemsDetail->renderButton($row)|noescape}
-													{/if}
 													{php $actionButtonRendered = false}
 													{foreach array_filter($actions, fn($action) => in_array($action->getClass($row), ADT\Datagrid\Component\DataGrid::ACTION_NOT_DROPDOWN_ITEM, true)) as $key => $action}
 														{if $row->hasAction($key)}
@@ -463,7 +460,7 @@
 									{include aggregationFunctions, columns => $columns}
 								{/if}
 
-								<td n:if="$actions || $control->isSortable() || $itemsDetail || $inlineEdit || $inlineAdd" class="col-action"></td>
+								<td n:if="$actions || $control->isSortable() || $inlineEdit || $inlineAdd" class="col-action"></td>
 							</tr>
 
 							{block noItems}
