@@ -98,17 +98,17 @@ abstract class BaseGrid extends Control
 		}
 		$grid->setDataSource($queryObjectDataSource);
 
-		if ($this->allowEdit()) {
+		if ($this->allowEdit() && (!$this->allowEdit()->acl || $this->getSecurityUser()->isAllowed($this->allowEdit()->acl))) {
 			$grid->addAction('edit', '')
 				->setIcon('edit')
 				->setClass('ajax datagrid-edit');
 		}
 
-		if ($this->allowDelete() && $this->getSecurityUser()->isAllowed($this->allowDelete()->getAcl())) {
-			$grid->addAction('delete', 'Smazat', 'delete!')
+		if ($this->allowDelete() && (!$this->allowDelete()->acl || $this->getSecurityUser()->isAllowed($this->allowDelete()->acl))) {
+			$grid->addAction('delete', $this->getTranslator()->translate('ublaboo_datagrid.delete.label'), 'delete!')
 				->setIcon('trash')
 				->setClass('ajax datagrid-delete')
-				->setConfirmation(new StringConfirmation($this->getTranslator()->translate('action.delete.confirm')));
+				->setConfirmation(new StringConfirmation($this->getTranslator()->translate('ublaboo_datagrid.delete.confirm')));
 		}
 
 		$grid->setSortableHandler($this->getName() . '-sortRows!');
@@ -155,6 +155,14 @@ abstract class BaseGrid extends Control
 	 */
 	final public function handleEdit(int $id): void
 	{
+		if (!$this->allowEdit()) {
+			$this->getPresenter()->error();
+		}
+
+		if ($this->allowEdit()->acl && !$this->getSecurityUser()->isAllowed($this->allowEdit()->acl)) {
+			$this->getPresenter()->error();
+		}
+		
 		if (str_ends_with($this->allowEdit()->redirect, '!')) {
 			$methodName = rtrim('handle' . ucfirst($this->allowEdit()->redirect), '!');
 
@@ -221,7 +229,7 @@ abstract class BaseGrid extends Control
 			$this->getPresenter()->error();
 		}
 
-		if (!$this->getSecurityUser()->isAllowed($this->allowDelete()->acl)) {
+		if ($this->allowDelete()->acl && !$this->getSecurityUser()->isAllowed($this->allowDelete()->acl)) {
 			$this->getPresenter()->error();
 		}
 

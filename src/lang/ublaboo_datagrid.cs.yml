@@ -25,3 +25,5 @@ multiselect_selected: "{0} selected"
 per_page_submit: Change
 items_onPage: Items on page
 disable_is_active_filter: Vyhledat i v neaktivních
+delete.confirm: Opravdu smazat?
+delete.label: Smazat

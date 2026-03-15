@@ -6,11 +6,11 @@ use Nette\Security\Resource;
 
 class EditParams
 {
-	public Resource $acl;
+	public ?Resource $acl = null;
 	public string $redirect;
-	public $condition;
+	public $condition = null;
 
-	public function __construct(Resource $acl, string $redirect, ?callable $condition = null)
+	public function __construct(string $redirect, ?Resource $acl = null, ?callable $condition = null)
 	{
 		$this->acl = $acl;
 		$this->redirect = $redirect;
