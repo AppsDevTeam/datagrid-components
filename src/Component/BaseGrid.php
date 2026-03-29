@@ -89,14 +89,7 @@ abstract class BaseGrid extends Control
 		$grid->setEmail($this->getEmail());
 		$grid->setGridName($this->getGridName());
 
-		$queryObject = $this->createQueryObject();
-		$this->initQueryObject($queryObject);
-
-		$queryObjectDataSource = $this->getQueryObjectDataSourceFactory()->create($queryObject);
-		if ($this->getDataSourceFilterCallback()) {
-			$queryObjectDataSource->setFilterCallback($this->getDataSourceFilterCallback());
-		}
-		$grid->setDataSource($queryObjectDataSource);
+		$this->setGridDataSource($grid);
 
 		if ($this->allowEdit() && (!$this->allowEdit()->acl || $this->getSecurityUser()->isAllowed($this->allowEdit()->acl))) {
 			$grid->addAction('edit', '')
@@ -130,6 +123,18 @@ abstract class BaseGrid extends Control
 	public function getGrid(): DataGrid
 	{
 		return $this['grid'];
+	}
+
+	protected function setGridDataSource(DataGrid $grid): void
+	{
+		$queryObject = $this->createQueryObject();
+		$this->initQueryObject($queryObject);
+
+		$queryObjectDataSource = $this->getQueryObjectDataSourceFactory()->create($queryObject);
+		if ($this->getDataSourceFilterCallback()) {
+			$queryObjectDataSource->setFilterCallback($this->getDataSourceFilterCallback());
+		}
+		$grid->setDataSource($queryObjectDataSource);
 	}
 
 	protected function initQueryObject($queryObject): void
@@ -277,12 +282,16 @@ abstract class BaseGrid extends Control
 	 */
 	protected function addIsActive(DataGrid $grid): void
 	{
+		if ($this->withoutIsActiveColumn) {
+			$grid->setIsActiveValue(false);
+			return;
+		}
+
 		$class = $this->createQueryObject()->getEntityClass();
 		$metadata = $this->getEntityManager()->getClassMetadata($class);
 
 		if (
-			$this->withoutIsActiveColumn
-			|| isset($grid->getColumns()['isActive'])
+			isset($grid->getColumns()['isActive'])
 			|| !$metadata->hasField('isActive')
 		) {
 			$grid->setIsActiveValue(false);
