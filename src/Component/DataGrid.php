@@ -53,6 +53,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	protected string $gridName;
 	protected string $email;
 	private bool $isActiveValue = true;
+	private array $switcherValues = [];
 	protected ?string $parentTemplate = null;
 
 	public function getSessionData(?string $key = null, mixed $defaultValue = null): array
@@ -128,6 +129,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->template->showTableFoot = $this->showTableFoot;
 		$this->template->toolbarButons = $this->toolbarButtons;
 		$this->template->isActiveValue = $this->isActiveValue;
+		$this->template->switcherValues = $this->switcherValues;
 		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetch();
 		$this->template->parentTemplate = $this->parentTemplate;
 
@@ -331,33 +333,73 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	 */
 	public function addIsActiveSwitcher(): void
 	{
+		$this->addSwitcher(
+			'isActive',
+			'app.forms.global.isActive.label',
+			function (IsActiveFilter $query, $value) {
+				if (!$value) {
+					$query->disableIsActiveFilter();
+				}
+			},
+			title: 'app.forms.global.isActive.title'
+		);
+
+		$this->isActiveValue = $this->switcherValues['isActive'];
+	}
+
+	/**
+	 * @throws DataGridException
+	 */
+	public function addSwitcher(string $key, string $name, callable $callback, ?string $column = null, ?string $title = null, bool $defaultValue = true): FilterSwitcher
+	{
 		$postRequest = $this->getPresenter()->getRequest()->getPost('filter');
-		$isActive = $this->addFilterSwitcher('isActive', 'app.forms.global.isActive.label', 'isActive')
-			->setValue(true)
-			->addAttribute('title', $this->translator->translate('app.forms.global.isActive.title'));
+		$switcher = $this->addFilterSwitcher($key, $name, $column)
+			->setValue($defaultValue)
+			->setCondition($callback);
+
+		if ($title) {
+			$switcher->addAttribute('title', $this->translator->translate($title));
+		}
+
+		$this->switcherValues[$key] = $defaultValue;
 
 		if (
-			(isset($this->params['filter']['isActive']) && (
-				$this->params['filter']['isActive'] === 'true'
-				|| $this->params['filter']['isActive'] === '1')
-			) || (isset($postRequest['isActive']) && $postRequest['isActive'] === '1')
+			(
+				isset($this->params['filter'][$key])
+				&&
+				(
+					$this->params['filter'][$key] === 'true'
+					||
+					$this->params['filter'][$key] === '1'
+				)
+			)
+			||
+			(isset($postRequest[$key]) && $postRequest[$key] === '1')
 		) {
-			$isActive
+			$switcher
 				->setValue(true)
 				->setDefaultValue(true)
 				->addAttribute('checked', 'checked');
-		}
-		elseif (
-			(isset($this->params['filter']['isActive']) && (
-				$this->params['filter']['isActive'] === 'false'
-				|| $this->params['filter']['isActive'] === '0')
-			) || (isset($postRequest['isActive']) && $postRequest['isActive'] === '0')
+
+			$this->switcherValues[$key] = true;
+
+		} elseif (
+			(
+				isset($this->params['filter'][$key])
+				&&
+				(
+					$this->params['filter'][$key] === 'false'
+					||
+					$this->params['filter'][$key] === '0'
+				)
+			)
+			||
+			(isset($postRequest[$key]) && $postRequest[$key] === '0')
 		) {
-			$isActive->setCondition(function (IsActiveFilter $query) {
-				$query->disableIsActiveFilter();
-			});
-			$this->isActiveValue = false;
+			$this->switcherValues[$key] = false;
 		}
+
+		return $switcher;
 	}
 
 	/**
@@ -373,7 +415,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 		$this->addFilterCheck($key);
 
-		return $this->filters[$key] = new FilterSwitcher($this, $key, $name, $column);
+		return $this->filters[$key] = new FilterSwitcher($this, $key, $this->translator->translate($name), $column);
 	}
 
 	public function isFilterActive(?string $filter = null): bool
