@@ -296,7 +296,7 @@ trait GridFilterFormTrait
 		$form['save']->addCondition(Form::Equal, true)
 			->toggle($form->getSections()['name']->getHtmlId());
 
-		$form->addSubmit("submit", "app.forms.favouriteProduct.labels.submit");
+		$form->addSubmit("submit", "ublaboo_datagrid.advanced_search.submit");
 		$form->addSubmit('addFilter')
 			->setValidationScope([])
 			->onClick[] = function () use ($form) {
