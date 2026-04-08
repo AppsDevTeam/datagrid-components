@@ -27,3 +27,4 @@ items_onPage: Items on page
 disable_is_active_filter: Vyhledat i v neaktivních
 delete.confirm: Opravdu smazat?
 delete.label: Smazat
+advanced_search.submit: Filtrovat
