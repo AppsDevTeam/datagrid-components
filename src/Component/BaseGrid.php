@@ -174,10 +174,7 @@ abstract class BaseGrid extends Control
 			try {
 				$this->getPresenter()->{$methodName}($id);
 			} catch (InvalidLinkException|TypeError) {
-				$row = $this->createQueryObject()->byId($id)->getQuery()->getOneOrNullResult();
-				if ($row === null) {
-					$this->getPresenter()->error();
-				}
+				$row = $this->createQueryObject()->byId($id)->getQuery()->getSingleResult();
 				if (is_array($row)) {
 					$entity = $row[0];
 				} else {
@@ -191,11 +188,7 @@ abstract class BaseGrid extends Control
 			try {
 				$this->getPresenter()->redirect($this->allowEdit()->redirect, $id);
 			} catch (InvalidLinkException) {
-				$entity = $this->createQueryObject()->byId($id)->fetchOneOrNull();
-				if ($entity === null) {
-					$this->getPresenter()->error();
-				}
-				$this->getPresenter()->redirect($this->allowEdit()->redirect, $entity);
+				$this->getPresenter()->redirect($this->allowEdit()->redirect, $this->createQueryObject()->byId($id)->fetchOne());
 			}
 		}
 	}
@@ -245,11 +238,12 @@ abstract class BaseGrid extends Control
 			$this->getPresenter()->error();
 		}
 
-		$row = $this->createQueryObject()->byId($id)->getQuery()->getOneOrNullResult();
-		if ($row === null) {
-			$this->getPresenter()->error();
+		$row = $this->createQueryObject()->byId($id)->getQuery()->getSingleResult();
+		if (is_array($row)) {
+			$entity = $row[0];
+		} else {
+			$entity = $row;
 		}
-		$entity = is_array($row) ? $row[0] : $row;
 
 		if ($this->allowDelete()->onDelete && !($this->allowDelete()->onDelete)($entity)) {
 			return;
