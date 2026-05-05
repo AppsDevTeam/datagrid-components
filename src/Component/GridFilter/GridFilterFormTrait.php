@@ -313,7 +313,7 @@ trait GridFilterFormTrait
 	{
 		$gridFilterQuery = $this->getGridFilterQuery()
 			->byName($inputs['name'])
-			->byGrid($this->grid->getName());
+			->byGrid($this->grid->getGridName());
 
 		if ($gridFilter) {
 			$gridFilterQuery->byIdNot($gridFilter->getId());
