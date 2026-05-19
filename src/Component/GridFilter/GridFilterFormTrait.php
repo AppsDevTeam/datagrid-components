@@ -25,36 +25,36 @@ trait GridFilterFormTrait
 	abstract public function redrawControl(?string $snippet = null, bool $redraw = true): void;
 	abstract public function getPresenter(): ?Presenter;
 
-	const array TRANSLATIONS = [// TODO překlady
-		'sEqual' => 'je rovno',
-		'sNotEqual' => 'není rovno',
-		'sStart' => 'začíná na',
-		'sContain' => 'obsahuje',
-		'sNotContain' => 'neobsahuje',
-		'sFinish' => 'končí na',
-		'sInList' => 'je v seznamu',
-		'sIsNull' => 'je prázdné',
-		'sIsNotNull' => 'není prázdné',
-		'sBefore' => 'před',
-		'sAfter' => 'po',
-		'sNumEqual' => 'je rovno',
-		'sNumNotEqual' => 'není rovno',
-		'sGreater' => 'je větší',
-		'sSmaller' => 'je menší',
-		'sOn' => 'rovno',
-		'sNotOn' => 'není rovno',
-		'sAt' => 'v',
-		'sNotAt' => 'není v',
-		'sBetween' => 'mezi',
-		'sNotBetween' => 'není mezi',
-		'opAnd' => 'a',
-		'yes' => 'Ano',
-		'no' => 'Ne',
-		'bNewCond' => 'Přidat filtr',
-		'bAddCond' => 'Přidat podmínku',
-		'bUpdateCond' => 'Aktualizovat podmínku',
-		'bSubmit' => 'Odeslat',
-		'bCancel' => 'Zrušit',
+	const array TRANSLATIONS = [
+		'sEqual' => 'ublaboo_datagrid.advanced_search.operator.equal',
+		'sNotEqual' => 'ublaboo_datagrid.advanced_search.operator.not_equal',
+		'sStart' => 'ublaboo_datagrid.advanced_search.operator.starts_with',
+		'sContain' => 'ublaboo_datagrid.advanced_search.operator.contains',
+		'sNotContain' => 'ublaboo_datagrid.advanced_search.operator.not_contains',
+		'sFinish' => 'ublaboo_datagrid.advanced_search.operator.ends_with',
+		'sInList' => 'ublaboo_datagrid.advanced_search.operator.in_list',
+		'sIsNull' => 'ublaboo_datagrid.advanced_search.operator.is_null',
+		'sIsNotNull' => 'ublaboo_datagrid.advanced_search.operator.is_not_null',
+		'sBefore' => 'ublaboo_datagrid.advanced_search.operator.before',
+		'sAfter' => 'ublaboo_datagrid.advanced_search.operator.after',
+		'sNumEqual' => 'ublaboo_datagrid.advanced_search.operator.num_equal',
+		'sNumNotEqual' => 'ublaboo_datagrid.advanced_search.operator.num_not_equal',
+		'sGreater' => 'ublaboo_datagrid.advanced_search.operator.greater',
+		'sSmaller' => 'ublaboo_datagrid.advanced_search.operator.smaller',
+		'sOn' => 'ublaboo_datagrid.advanced_search.operator.on',
+		'sNotOn' => 'ublaboo_datagrid.advanced_search.operator.not_on',
+		'sAt' => 'ublaboo_datagrid.advanced_search.operator.at',
+		'sNotAt' => 'ublaboo_datagrid.advanced_search.operator.not_at',
+		'sBetween' => 'ublaboo_datagrid.advanced_search.operator.between',
+		'sNotBetween' => 'ublaboo_datagrid.advanced_search.operator.not_between',
+		'opAnd' => 'ublaboo_datagrid.advanced_search.operator.and',
+		'yes' => 'ublaboo_datagrid.yes',
+		'no' => 'ublaboo_datagrid.no',
+		'bNewCond' => 'ublaboo_datagrid.advanced_search.add_filter',
+		'bAddCond' => 'ublaboo_datagrid.advanced_search.add_condition',
+		'bUpdateCond' => 'ublaboo_datagrid.advanced_search.update_condition',
+		'bSubmit' => 'ublaboo_datagrid.advanced_search.btn_submit',
+		'bCancel' => 'ublaboo_datagrid.advanced_search.btn_cancel',
 	];
 
 	const array EVO_API = [
@@ -281,15 +281,15 @@ trait GridFilterFormTrait
 				}
 			}, name: 'value', watchForRedraw: [$container['label'], $container['operator']]);
 
-		}, isRequiredMessage: 'Zadejte alespoň 1 filtr.'); // TODO translate
+		}, isRequiredMessage: $form->getTranslator()->translate('ublaboo_datagrid.advanced_search.required_filter'));
 
-		$form->addCheckbox('save', 'Uložit'); // TODO translate
+		$form->addCheckbox('save', 'ublaboo_datagrid.advanced_search.save');
 		if ($gridFilter) {
 			$form['save']->setDefaultValue(1);
 		}
 
 		$form->addSection(function() use ($form) {
-			$form->addText('name', 'Název')// TODO translate
+			$form->addText('name', 'ublaboo_datagrid.advanced_search.name')
 				->addConditionOn($form['save'], Form::Equal, true)
 					->setRequired();
 		}, name: 'name');
@@ -320,11 +320,11 @@ trait GridFilterFormTrait
 		}
 
 		if ($gridFilterQuery->count() > 0) {
-			$form->addError(sprintf('Název %s se již používá', $inputs['name']));// TODO translate
+			$form->addError(sprintf($form->getTranslator()->translate('ublaboo_datagrid.advanced_search.name_already_used'), $inputs['name']), translate: false);
 		}
 
 		if (!count($inputs['value'])) {
-			$form->addError('Není vybraný žádný filter');// TODO translate
+			$form->addError('ublaboo_datagrid.advanced_search.no_filter_selected');
 		}
 	}
 

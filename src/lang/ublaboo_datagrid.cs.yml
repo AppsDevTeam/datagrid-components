@@ -1,30 +1,66 @@
 edit: Upravit
 no_item_found_reset: "Žádné položky nenalezeny. Můžete zkusit restartovat filtr."
-here: here
+here: zde
 no_item_found: "Žádné položky nenalezeny."
-group_actions: "Group actions"
-all: all
-reset_filter: "Reset filter"
-items: Items
-from: from
-show: Show
-show_all_columns: "Show all columns"
-show_default_columns: "Show default columns"
-hide_column: "Hide column"
-action: Action
-previous: Previous
-next: Next
-choose: Choose
-choose_input_required: "Group action text not allow empty value."
-execute: Execute
-save: Save
-cancel: Cancel
-multiselect_choose: Choose
-filter_submit_button: Filter
-multiselect_selected: "{0} selected"
-per_page_submit: Change
-items_onPage: Items on page
-disable_is_active_filter: Vyhledat i v neaktivních
-delete.confirm: Opravdu smazat?
+group_actions: "Hromadné akce"
+all: vše
+reset_filter: "Resetovat filtr"
+items: Položky
+from: z
+show: Zobrazit
+show_filter: "Zobrazit filtr"
+show_all_columns: "Zobrazit všechny sloupce"
+show_default_columns: "Zobrazit výchozí sloupce"
+hide_column: "Skrýt sloupec"
+action: Akce
+previous: Předchozí
+next: Další
+choose: Vyberte
+choose_input_required: "Text hromadné akce nesmí být prázdný."
+execute: Provést
+save: Uložit
+cancel: Zrušit
+multiselect_choose: Vyberte
+filter_submit_button: Filtrovat
+multiselect_selected: "{0} vybráno"
+per_page_submit: Změnit
+items_onPage: "Položek na stránce"
+disable_is_active_filter: "Vyhledat i v neaktivních"
+delete.confirm: "Opravdu smazat?"
 delete.label: Smazat
+yes: "Ano"
+no: "Ne"
 advanced_search.submit: Filtrovat
+advanced_search.required_filter: "Zadejte alespoň 1 filtr."
+advanced_search.save: Uložit
+advanced_search.name: Název
+advanced_search.name_already_used: "Název %s se již používá"
+advanced_search.no_filter_selected: "Není vybraný žádný filtr"
+advanced_search.active_filter: "Aktivní filtr"
+advanced_search.operator.equal: "je rovno"
+advanced_search.operator.not_equal: "není rovno"
+advanced_search.operator.starts_with: "začíná na"
+advanced_search.operator.contains: obsahuje
+advanced_search.operator.not_contains: neobsahuje
+advanced_search.operator.ends_with: "končí na"
+advanced_search.operator.in_list: "je v seznamu"
+advanced_search.operator.is_null: "je prázdné"
+advanced_search.operator.is_not_null: "není prázdné"
+advanced_search.operator.before: před
+advanced_search.operator.after: po
+advanced_search.operator.num_equal: "je rovno"
+advanced_search.operator.num_not_equal: "není rovno"
+advanced_search.operator.greater: "je větší"
+advanced_search.operator.smaller: "je menší"
+advanced_search.operator.on: rovno
+advanced_search.operator.not_on: "není rovno"
+advanced_search.operator.at: v
+advanced_search.operator.not_at: "není v"
+advanced_search.operator.between: mezi
+advanced_search.operator.not_between: "není mezi"
+advanced_search.operator.and: a
+advanced_search.add_filter: "Přidat filtr"
+advanced_search.add_condition: "Přidat podmínku"
+advanced_search.update_condition: "Aktualizovat podmínku"
+advanced_search.btn_submit: Odeslat
+advanced_search.btn_cancel: Zrušit

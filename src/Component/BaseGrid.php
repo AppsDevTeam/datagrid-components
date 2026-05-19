@@ -113,10 +113,10 @@ abstract class BaseGrid extends Control
 
 	public function getYesNoOptions(): array
 	{
-		// TODO translate
+		$translator = $this->getTranslator();
 		return [
-			'1' => 'ano',
-			'0' => 'ne',
+			'1' => $translator->translate('ublaboo_datagrid.yes'),
+			'0' => $translator->translate('ublaboo_datagrid.no'),
 		];
 	}
 
