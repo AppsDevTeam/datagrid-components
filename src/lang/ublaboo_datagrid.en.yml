@@ -8,6 +8,7 @@ reset_filter: "Reset filter"
 items: Items
 from: from
 show: Show
+show_filter: "Show filter"
 show_all_columns: "Show all columns"
 show_default_columns: "Show default columns"
 hide_column: "Hide column"
@@ -23,7 +24,43 @@ multiselect_choose: Choose
 filter_submit_button: Filter
 multiselect_selected: "{0} selected"
 per_page_submit: Change
-items_onPage: Items on page
-disable_is_active_filter: Search also in inactive
-delete.confirm: Do you really want to delete this item?
+items_onPage: "Items on page"
+disable_is_active_filter: "Search also in inactive"
+delete.confirm: "Do you really want to delete this item?"
 delete.label: Delete
+yes: "Yes"
+no: "No"
+advanced_search.submit: Filter
+advanced_search.required_filter: "Please enter at least 1 filter."
+advanced_search.save: Save
+advanced_search.name: Name
+advanced_search.name_already_used: "Name %s is already in use"
+advanced_search.no_filter_selected: "No filter is selected"
+advanced_search.active_filter: "Active filter"
+advanced_search.operator.equal: "is equal"
+advanced_search.operator.not_equal: "is not equal"
+advanced_search.operator.starts_with: "starts with"
+advanced_search.operator.contains: "contains"
+advanced_search.operator.not_contains: "does not contain"
+advanced_search.operator.ends_with: "ends with"
+advanced_search.operator.in_list: "is in list"
+advanced_search.operator.is_null: "is empty"
+advanced_search.operator.is_not_null: "is not empty"
+advanced_search.operator.before: before
+advanced_search.operator.after: after
+advanced_search.operator.num_equal: "is equal"
+advanced_search.operator.num_not_equal: "is not equal"
+advanced_search.operator.greater: "is greater"
+advanced_search.operator.smaller: "is smaller"
+advanced_search.operator.on: equal
+advanced_search.operator.not_on: "is not equal"
+advanced_search.operator.at: at
+advanced_search.operator.not_at: "not at"
+advanced_search.operator.between: between
+advanced_search.operator.not_between: "not between"
+advanced_search.operator.and: and
+advanced_search.add_filter: "Add filter"
+advanced_search.add_condition: "Add condition"
+advanced_search.update_condition: "Update condition"
+advanced_search.btn_submit: Submit
+advanced_search.btn_cancel: Cancel

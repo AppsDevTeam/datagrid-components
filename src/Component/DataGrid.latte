@@ -68,7 +68,7 @@
 									<a href="{$control->getParent()->link('editAdvancedFilter!', ['editId' => $selectedGridFilter?->getId()])}" class="btn">
 										<div class="dropdown-selected-name-wrapper">
 											<i class="fa-solid fa-filter"></i>
-											<span class="dropdown-selected-name">{$selectedGridFilter?->getName() ?: ($control->isFilterActive('advancedSearch') ? 'Aktivní filtr' : '')}</span> {*TODO translate*}
+											<span class="dropdown-selected-name">{$selectedGridFilter?->getName() ?: ($control->isFilterActive('advancedSearch') ? $translator->translate('ublaboo_datagrid.advanced_search.active_filter') : '')}</span>
 										</div>
 									</a>
 									<a href="{$control->getParent()->link('editAdvancedFilter!')}" class="btn">
@@ -107,7 +107,7 @@
 										<li class="dropdown-item new-filter" id="add-button">
 											<a href="{$control->getParent()->link('editAdvancedFilter!')}">
 												<i class="fa-solid fa-plus"></i>
-												Přidat nový filtr {* TODO překlady *}
+												{='ublaboo_datagrid.advanced_search.add_filter'|translate}
 											</a>
 										</li>
 									</ul>
