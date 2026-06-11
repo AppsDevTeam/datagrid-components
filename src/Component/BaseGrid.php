@@ -42,6 +42,7 @@ abstract class BaseGrid extends Control
 	/** @var callable */
 	protected $onDelete;
 	protected bool $withoutIsActiveColumn = false;
+	protected ?string $treeViewParentProperty = null;
 
 	public function __construct()
 	{
@@ -60,7 +61,36 @@ abstract class BaseGrid extends Control
 
 			$this->initGrid($grid);
 			$this->addIsActive($grid);
+
+			if ($this->isTreeView()) {
+				$grid->setTreeView(
+					fn ($parentId) => $this->createTreeViewChildrenDataSource($parentId),
+					fn ($item) => $this->treeViewItemHasChildren($item),
+				);
+				$grid->setTemplateFile(__DIR__ . '/DataGridTree.latte');
+			}
 		});
+	}
+
+	protected function isTreeView(): bool
+	{
+		return $this->treeViewParentProperty !== null;
+	}
+
+	protected function createTreeViewChildrenDataSource(mixed $parentId): mixed
+	{
+		$parent = $this->createQueryObject()->byId($parentId)->fetchOne();
+
+		$queryObject = $this->createQueryObject();
+		$this->initQueryObject($queryObject);
+		$queryObject->by($this->treeViewParentProperty, $parent);
+
+		return $this->getQueryObjectDataSourceFactory()->create($queryObject);
+	}
+
+	protected function treeViewItemHasChildren(object $item): bool
+	{
+		return $this->createQueryObject()->by($this->treeViewParentProperty, $item)->count() > 0;
 	}
 
 	protected function createQueryObject(): QueryObject
@@ -129,6 +159,10 @@ abstract class BaseGrid extends Control
 	{
 		$queryObject = $this->createQueryObject();
 		$this->initQueryObject($queryObject);
+
+		if ($this->isTreeView()) {
+			$queryObject->by($this->treeViewParentProperty, null);
+		}
 
 		$queryObjectDataSource = $this->getQueryObjectDataSourceFactory()->create($queryObject);
 		if ($this->getDataSourceFilterCallback()) {
@@ -206,7 +240,14 @@ abstract class BaseGrid extends Control
 		$itemId = $this->getParameter('item_id');
 		$nextId = $this->getParameter('next_id');
 		$previousId = $this->getParameter('prev_id');
+		$parentId = $this->getParameter('parent_id');
 		$item = $this->createQueryObject()->byId($itemId)->fetchOne();
+
+		if ($this->isTreeView()) {
+			$parent = $parentId ? $this->createQueryObject()->byId($parentId)->fetchOne() : null;
+			$setter = 'set' . ucfirst($this->treeViewParentProperty);
+			$item->$setter($parent);
+		}
 
 		if ($previousId) {
 			$previousItem = $this->createQueryObject()->byId($previousId)->fetchOne();
