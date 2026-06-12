@@ -25,10 +25,12 @@ use Contributte\Datagrid\Filter\Filter;
 use Contributte\Datagrid\Filter\FilterMultiSelect;
 use Contributte\Datagrid\Filter\FilterSelect;
 use Contributte\Datagrid\Utils\ArraysHelper;
+use Contributte\Datagrid\Utils\PropertyAccessHelper;
 use DateTimeInterface;
 use Nette;
 use Nette\Application\Responses\FileResponse;
 use Nette\Application\UI\Form;
+use Nette\Bridges\ApplicationLatte\Template;
 use Nette\Utils\DateTime;
 use Nette\Utils\Json;
 use ReflectionClass;
@@ -274,6 +276,36 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->addColumn($key, $columnText);
 
 		return $columnText;
+	}
+
+	public function addColumnBoolean(string $key, string $name, ?string $column = null, string $filter = 'boolIcon'): ColumnText
+	{
+		$column ??= $key;
+
+		$columnText = $this->addColumnText($key, $name, $column);
+		$columnText
+			->setRenderer(function ($item) use ($column, $filter): string {
+				$template = $this->getTemplate();
+				assert($template instanceof Template);
+
+				return $template->getLatte()->invokeFilter($filter, [$this->resolveBoolValue($item, $column)]);
+			})
+			->setTemplateEscaping(false);
+
+		return $columnText;
+	}
+
+	private function resolveBoolValue(object $item, string $column): ?bool
+	{
+		$value = $item;
+		foreach (explode('.', $column) as $property) {
+			if (!is_object($value)) {
+				return null;
+			}
+			$value = PropertyAccessHelper::getValue($value, $property);
+		}
+
+		return $value === null ? null : (bool) $value;
 	}
 
 	public function addFilterBoolean(string $key, string $name, ?string $column = null, ?bool $nullable = null): FilterSelect|Filter
