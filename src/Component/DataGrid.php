@@ -13,6 +13,7 @@ use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\Forms\BootstrapFormRenderer;
+use ADT\Datagrid\Column\ColumnText;
 use ADT\Datagrid\Filter\FilterSwitcher;
 use ADT\QueryObjectDataSource\QueryObjectDataSource;
 use ADT\Utils\Utils;
@@ -24,16 +25,21 @@ use Contributte\Datagrid\Filter\Filter;
 use Contributte\Datagrid\Filter\FilterMultiSelect;
 use Contributte\Datagrid\Filter\FilterSelect;
 use Contributte\Datagrid\Utils\ArraysHelper;
+use Contributte\Datagrid\Utils\PropertyAccessHelper;
 use DateTimeInterface;
 use Nette;
 use Nette\Application\Responses\FileResponse;
 use Nette\Application\UI\Form;
+use Nette\Bridges\ApplicationLatte\Template;
 use Nette\Utils\DateTime;
 use Nette\Utils\Json;
+use ReflectionClass;
 
 class DataGrid extends \Contributte\Datagrid\Datagrid
 {
 	const string SELECTED_GRID_FILTER_KEY = 'advancedFilterId';
+
+	private const string FILTER_BOOLEAN_NULL = 'null';
 
 	public const string TEMPLATE_DEFAULT = 'DataGrid.latte';
 
@@ -260,6 +266,110 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	public function addColumnNumber(string $key, string $name, ?string $column = null): ColumnNumber
 	{
 		return parent::addColumnNumber($key, $name, $column)->setAlign('left');
+	}
+
+	public function addColumnText(string $key, string $name, ?string $column = null): ColumnText
+	{
+		$column ??= $key;
+
+		$columnText = new ColumnText($this, $key, $column, $name);
+		$this->addColumn($key, $columnText);
+
+		return $columnText;
+	}
+
+	public function addColumnBoolean(string $key, string $name, ?string $column = null, string $filter = 'boolIcon'): ColumnText
+	{
+		$column ??= $key;
+
+		$columnText = $this->addColumnText($key, $name, $column);
+		$columnText
+			->setRenderer(function ($item) use ($column, $filter): string {
+				$template = $this->getTemplate();
+				assert($template instanceof Template);
+
+				return $template->getLatte()->invokeFilter($filter, [$this->resolveBoolValue($item, $column)]);
+			})
+			->setTemplateEscaping(false);
+
+		return $columnText;
+	}
+
+	private function resolveBoolValue(object $item, string $column): ?bool
+	{
+		$value = $item;
+		foreach (explode('.', $column) as $property) {
+			if (!is_object($value)) {
+				return null;
+			}
+			$value = PropertyAccessHelper::getValue($value, $property);
+		}
+
+		return $value === null ? null : (bool) $value;
+	}
+
+	public function addFilterBoolean(string $key, string $name, ?string $column = null, ?bool $nullable = null): FilterSelect|Filter
+	{
+		$column ??= $key;
+
+		$options = $this->getBooleanOptions();
+		if ($nullable ?? $this->isColumnNullable($column)) {
+			$options[self::FILTER_BOOLEAN_NULL] = $this->getTranslator()->translate('ublaboo_datagrid.not_set');
+		}
+
+		return $this->addFilterSelect($key, $name, $options, $column)
+			->setPrompt($this->getTranslator()->translate('ublaboo_datagrid.all'))
+			->setCondition(function (QueryObject $query, $value) use ($column) {
+				if ($value === '' || $value === null) {
+					return;
+				}
+
+				if ($value === self::FILTER_BOOLEAN_NULL) {
+					$query->by($column, null);
+					return;
+				}
+
+				$query->by($column, (bool) $value);
+			});
+	}
+
+	/**
+	 * @return array<int, string>
+	 */
+	private function getBooleanOptions(): array
+	{
+		return [
+			1 => $this->getTranslator()->translate('ublaboo_datagrid.yes'),
+			0 => $this->getTranslator()->translate('ublaboo_datagrid.no'),
+		];
+	}
+
+	private function isColumnNullable(string $column): bool
+	{
+		if (str_contains($column, '.')) {
+			return false;
+		}
+
+		$dataSource = $this->getDataSource();
+		if (!$dataSource instanceof QueryObjectDataSource) {
+			return false;
+		}
+
+		$entityClass = $dataSource->getQueryObject()->getEntityClass();
+		$metadata = $this->em->getClassMetadata($entityClass);
+
+		if ($metadata->hasField($column)) {
+			return $metadata->isNullable($column);
+		}
+
+		$getter = 'get' . ucfirst($column);
+		$reflection = new ReflectionClass($entityClass);
+		if ($reflection->hasMethod($getter)) {
+			$returnType = $reflection->getMethod($getter)->getReturnType();
+			return $returnType !== null && $returnType->allowsNull();
+		}
+
+		return false;
 	}
 
 	public function addFilterSelectMonth(string $key, string $name): FilterSelect|Filter
