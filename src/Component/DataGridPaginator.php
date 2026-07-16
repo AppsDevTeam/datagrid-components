@@ -12,7 +12,7 @@ use Nette\Utils\Paginator;
  */
 class DataGridPaginator extends \Contributte\Datagrid\Components\DatagridPaginator\DatagridPaginator
 {
-	private const int WINDOW_SIZE = 6;
+	private const int SURROUNDING_PAGES = 2;
 
 	public function getTemplateFile(): string
 	{
@@ -21,29 +21,25 @@ class DataGridPaginator extends \Contributte\Datagrid\Components\DatagridPaginat
 
 	public function render(): void
 	{
-		$this->getTemplate()->steps = $this->computeWindowSteps($this->getPaginator());
+		$this->getTemplate()->steps = $this->computeSlidingWindowSteps($this->getPaginator());
 		parent::render();
 	}
 
 	/**
 	 * @return int[]
 	 */
-	private function computeWindowSteps(Paginator $paginator): array
+	private function computeSlidingWindowSteps(Paginator $paginator): array
 	{
 		if ($paginator->pageCount < 2) {
 			return [$paginator->page];
 		}
 
-		$first = $paginator->firstPage;
-		$last = $paginator->lastPage;
-
-		$blockIndex = intdiv($paginator->page - $first, self::WINDOW_SIZE);
-		$start = $first + $blockIndex * self::WINDOW_SIZE;
-		$end = min($last, $start + self::WINDOW_SIZE - 1);
-
-		$steps = range($start, $end);
-		$steps[] = $first;
-		$steps[] = $last;
+		$steps = range(
+			max($paginator->firstPage, $paginator->page - self::SURROUNDING_PAGES),
+			(int) min($paginator->lastPage, $paginator->page + self::SURROUNDING_PAGES)
+		);
+		$steps[] = $paginator->firstPage;
+		$steps[] = $paginator->lastPage;
 
 		$steps = array_values(array_unique($steps));
 		sort($steps);
