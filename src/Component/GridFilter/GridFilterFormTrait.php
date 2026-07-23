@@ -140,7 +140,8 @@ trait GridFilterFormTrait
 				$form->setDefaults($defaults);
 			}
 
-			$selectedType = $filterList[$container->getUntrustedValues()->label]['type'] ?? null;
+			$selectedLabel = $container->getUntrustedValues()->label;
+			$selectedType = $selectedLabel === null ? null : ($filterList[$selectedLabel]['type'] ?? null);
 
 			$container->addSection(function() use ($container, $gridFilter, $form, $defaults, $filterList, $selectedType) {
 				switch ($selectedType) {
