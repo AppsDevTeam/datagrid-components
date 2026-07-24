@@ -313,7 +313,7 @@
 					</thead>
 
 					{block tbody}
-					<tbody n:snippet="tbody" {if $control->isSortable()}data-sortable data-sortable-url="{plink $control->getSortableHandler()}" data-sortable-parent-path="{$control->getSortableParentPath()}"{/}>
+					<tbody n:snippet="tbody" {if $control->isSortable()}data-sortable data-sortable-url="{plink $control->getSortableHandler()}" data-sortable-parent-path="{$control->getSortableParentPath()}"{/} {if $infiniteScroll}data-ajax-append{/if}>
 						{snippetArea items}
 							{if $inlineAdd && $inlineAdd->isPositionTop()}
 								{ifset #inlineAddRow}
@@ -519,10 +519,18 @@
 										</span>
 									</div>*}
 									<div class="col-pagination text-center">
-										{**
-										* Pagination
-										*}
-										{control paginator}
+										{if $infiniteScroll}
+											{default $showLoadMoreButton = true}
+											{default $infinityPage = 1}
+											<a n:if="$showLoadMoreButton" n:href="loadMore! page => $infinityPage" n:class="ajax, btn, btn-primary, infinite-scroll">
+												{='ublaboo_datagrid.load_more'|translate}
+											</a>
+										{else}
+											{**
+											* Pagination
+											*}
+											{control paginator}
+										{/if}
 									</div>
 									<div class="col-per-page text-right d-none">
 										<a n:href="resetFilter!" n:class="ajax, btn-sm, reset-filter, !$filter_active ? 'd-none' : ''"><i class="fa fa-filter mr-1"></i>{_common.resetFilter}</a>

@@ -25,6 +25,7 @@ filter_submit_button: Filtrovat
 multiselect_selected: "{0} vybráno"
 per_page_submit: Změnit
 items_onPage: "Položek na stránce"
+load_more: "Načíst další"
 disable_is_active_filter: "Vyhledat i v neaktivních"
 delete.confirm: "Opravdu smazat?"
 delete.label: Smazat

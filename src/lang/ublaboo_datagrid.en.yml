@@ -25,6 +25,7 @@ filter_submit_button: Filter
 multiselect_selected: "{0} selected"
 per_page_submit: Change
 items_onPage: "Items on page"
+load_more: "Load more"
 disable_is_active_filter: "Search also in inactive"
 delete.confirm: "Do you really want to delete this item?"
 delete.label: Delete
