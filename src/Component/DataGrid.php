@@ -55,6 +55,8 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	private bool $isActiveValue = true;
 	private array $switcherValues = [];
 	protected ?string $parentTemplate = null;
+	protected bool $infiniteScroll = false;
+	protected ?int $infinityPage = null;
 
 	public function getSessionData(?string $key = null, mixed $defaultValue = null): array
 	{
@@ -132,8 +134,47 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->template->switcherValues = $this->switcherValues;
 		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetch();
 		$this->template->parentTemplate = $this->parentTemplate;
+		$this->template->infiniteScroll = $this->infiniteScroll;
+		$this->template->infinityPage = $this->infinityPage ?? $this->page;
+
+		if ($this->infiniteScroll && $this->dataModel !== null) {
+			$this->dataModel->onAfterPaginated[] = function (): void {
+				$this->template->showLoadMoreButton = $this->showLoadMoreButton();
+			};
+		}
 
 		parent::render();
+	}
+
+	public function setInfiniteScroll(bool $infiniteScroll): static
+	{
+		$this->infiniteScroll = $infiniteScroll;
+		return $this;
+	}
+
+	public function isInfiniteScroll(): bool
+	{
+		return $this->infiniteScroll;
+	}
+
+	public function handleLoadMore(int $page): void
+	{
+		$this->infinityPage = $page + 1;
+		$this->getPaginator()?->getPaginator()->setPage($this->infinityPage);
+		$this->redrawControl('tbody');
+		$this->redrawControl('pagination');
+	}
+
+	protected function showLoadMoreButton(): bool
+	{
+		$paginatorComponent = $this->getPaginator();
+		if ($paginatorComponent === null) {
+			return false;
+		}
+
+		$paginator = $paginatorComponent->getPaginator();
+
+		return ($paginator->getItemsPerPage() * $paginator->getPage()) < $paginator->getItemCount();
 	}
 
 	/**
