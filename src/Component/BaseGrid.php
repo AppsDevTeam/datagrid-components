@@ -7,10 +7,12 @@ namespace ADT\Datagrid\Component;
 use ADT\Application\BasePresenter;
 use ADT\Datagrid\Model\Service\DatagridService;
 use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
+use ADT\DoctrineComponents\QueryObject\Filters\SearchFulltextFilter;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use Closure;
 use Contributte\Datagrid\Column\Action\Confirmation\StringConfirmation;
 use Contributte\Datagrid\Exception\DatagridException;
+use Contributte\Datagrid\Filter\FilterText;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\NoResultException;
 use Exception;
@@ -271,6 +273,23 @@ abstract class BaseGrid extends Control
 			->setCondition(function ($query, $value) {
 				$query->byQuery($value);
 			});
+	}
+
+	/**
+	 * Fulltext search over a column with a FULLTEXT index, the query object has to
+	 * implement ADT\DoctrineComponents\QueryObject\Filters\SearchFulltextFilter.
+	 *
+	 * @param string $column column with a FULLTEXT index, optionally a path over relations (eg. "location.searchString")
+	 * @throws DatagridException
+	 */
+	final public function addFilterFulltext(DataGrid $grid, string $column, string $key = 'search'): FilterText
+	{
+		$filter = $grid->addFilterText($key, '', [$column]);
+		$filter->setCondition(function (SearchFulltextFilter $query, $value) use ($column) {
+			$query->searchFulltext($column, (string) $value);
+		});
+
+		return $filter;
 	}
 
 	protected function allowEdit(): ?EditParams
