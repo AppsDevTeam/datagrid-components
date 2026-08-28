@@ -497,6 +497,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$advanceSearch = array_values($advanceSearch);
 
 		foreach ($advanceSearch as $searchFilter) {
+			$day = null;
 			$operatorMap = [
 				'eq' => QueryObjectByMode::EQUALS,
 				'ne' => QueryObjectByMode::NOT_EQUALS,
@@ -522,6 +523,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 				$value = Utils::getDateTimeFromArray($searchFilter['value']) ?: $searchFilter['value'];
 
 				if ($value instanceof DateTimeInterface) {
+					$day = $value;
 					$value = $value->format('Y-m-d H:i:s');
 				}
 
@@ -538,6 +540,24 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 			}
 
 			$label = $searchFilter['label'];
+			$mode = $operatorMap[$searchFilter['operator']] ?? QueryObjectByMode::EQUALS;
+
+			// Filtr typu 'date' nabizi jen datum bez casu, ale porovnava se proti sloupci,
+			// ktery cas obvykle ma. Rovnost by tak sedla jen na zaznamy presne o pulnoci
+			// (a nerovnost naopak na vsechny ostatni), proto z ni delame rozsah celeho dne.
+			if (
+				$day !== null
+				&& in_array($mode, [QueryObjectByMode::EQUALS, QueryObjectByMode::NOT_EQUALS], true)
+				&& $this->getFilter($label)->getType() === 'date'
+			) {
+				$value = [
+					$day->format('Y-m-d 00:00:00'),
+					$day->format('Y-m-d 23:59:59.999999'),
+				];
+				$mode = $mode === QueryObjectByMode::EQUALS
+					? QueryObjectByMode::BETWEEN
+					: QueryObjectByMode::NOT_BETWEEN;
+			}
 
 			// without this line, I will get Typed property Contributte\Datagrid\Filter\Filter::$value must not be accessed before initialization
 			$this->getFilter($label)->setValue($value);
@@ -549,7 +569,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 				$query->by(
 					(!empty($column) ? $column : $label),
 					$value,
-					$operatorMap[$searchFilter['operator']] ?? QueryObjectByMode::EQUALS
+					$mode
 				);
 			}
 		}
