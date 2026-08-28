@@ -8,6 +8,7 @@ use ADT\Datagrid\Model\Entities\GridFilter;
 use ADT\Datagrid\Model\Queries\GridFilterQuery;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\Forms\StaticContainer;
+use ADT\Utils\Utils;
 use Exception;
 use Nette\Application\UI\Presenter;
 use Nette\ComponentModel\IComponent;
@@ -109,6 +110,18 @@ trait GridFilterFormTrait
 			$defaults['value'] = !empty($this->grid->getGrid()->getParameters()['filter']['advancedSearch'])
 				? Json::decode($this->grid->getGrid()->getParameters()['filter']['advancedSearch'], forceArrays: true)
 				: [];
+
+			// Datumy jsou v parametrech gridu serializovane jako pole (date/timezone/timezone_type).
+			// DateTimeControl takove pole neprijme, takze bez prevodu zpatky na DateTimeImmutable
+			// by se hodnota do znovuotevreneho filtru nepredvyplnila.
+			foreach ($defaults['value'] as &$_filter) {
+				foreach (['value', 'value2'] as $_key) {
+					if (isset($_filter[$_key]) && $_date = Utils::getDateTimeFromArray($_filter[$_key])) {
+						$_filter[$_key] = $_date;
+					}
+				}
+			}
+			unset($_filter);
 		}
 
 		$filterList = [];
@@ -204,6 +217,16 @@ trait GridFilterFormTrait
 
 					default:
 						throw new Exception('Unknown filter type: ' . $selectedType);
+				}
+
+				// Sekce s hodnotou se stavi az podle vybraneho operatoru, takze ho musime
+				// predvyplnit uz tady. Jinak by se pri znovuotevreni filtru operator sice
+				// vykreslil (defaulty se aplikuji i na konci initForm), ale policko s
+				// hodnotou by uz nevzniklo.
+				if ($gridFilter) {
+					$form->mapToForm();
+				} else {
+					$form->setDefaults($defaults);
 				}
 			}, name: 'operator', watchForRedraw: [$container['label']]);
 
