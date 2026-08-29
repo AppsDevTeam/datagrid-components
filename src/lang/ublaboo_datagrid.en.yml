@@ -30,6 +30,7 @@ delete.confirm: "Do you really want to delete this item?"
 delete.label: Delete
 yes: "Yes"
 no: "No"
+not_set: "Not set"
 advanced_search.submit: Filter
 advanced_search.required_filter: "Please enter at least 1 filter."
 advanced_search.save: Save

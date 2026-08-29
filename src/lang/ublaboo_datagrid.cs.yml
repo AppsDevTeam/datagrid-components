@@ -30,6 +30,7 @@ delete.confirm: "Opravdu smazat?"
 delete.label: Smazat
 yes: "Ano"
 no: "Ne"
+not_set: "Nevyplněno"
 advanced_search.submit: Filtrovat
 advanced_search.required_filter: "Zadejte alespoň 1 filtr."
 advanced_search.save: Uložit
