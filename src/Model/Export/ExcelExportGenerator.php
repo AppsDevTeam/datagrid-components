@@ -35,7 +35,11 @@ final readonly class ExcelExportGenerator implements ExportFileGenerator
 			$writer->writeSheet($data, mb_substr($name, 0, 31)); // Excel limit nazvu sheetu
 		}
 
-		$path = tempnam(sys_get_temp_dir(), 'export') . '_' . GeneratorHelper::fileName($identifier) . '.xlsx';
+		// unikatni TMP adresar + ciste jmeno souboru - basename se pouziva
+		// jako nazev pri downloadu i pro ulozeni (Exporter prida jen id-)
+		$dir = sys_get_temp_dir() . '/' . uniqid('export_', true);
+		mkdir($dir);
+		$path = $dir . '/' . GeneratorHelper::fileName($identifier) . '.xlsx';
 		file_put_contents($path, $writer->writeToString());
 		return $path;
 	}

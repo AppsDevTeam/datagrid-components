@@ -32,7 +32,11 @@ final readonly class CsvExportGenerator implements ExportFileGenerator
 		}
 		rewind($stream);
 
-		$path = tempnam(sys_get_temp_dir(), 'export') . '_' . GeneratorHelper::fileName($identifier) . '.csv';
+		// unikatni TMP adresar + ciste jmeno souboru - basename se pouziva
+		// jako nazev pri downloadu i pro ulozeni (Exporter prida jen id-)
+		$dir = sys_get_temp_dir() . '/' . uniqid('export_', true);
+		mkdir($dir);
+		$path = $dir . '/' . GeneratorHelper::fileName($identifier) . '.csv';
 		file_put_contents($path, stream_get_contents($stream));
 		return $path;
 	}
