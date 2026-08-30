@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\Datagrid\Model\Export;
 
-use ADT\Datagrid\Model\Export\Excel\ExcelDataModel;
+use ADT\Datagrid\Model\Export\Excel\Model\ExcelDataModel;
 use ADT\Exporter\Model\Service\ExportFileGenerator;
 use Contributte\Datagrid\Datagrid;
 use Contributte\Datagrid\Row;

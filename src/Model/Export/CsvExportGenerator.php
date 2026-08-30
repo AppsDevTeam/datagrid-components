@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\Datagrid\Model\Export;
 
-use ADT\Datagrid\Model\Export\Csv\CsvDataModel;
+use Contributte\Datagrid\CsvDataModel;
 use ADT\Exporter\Model\Service\ExportFileGenerator;
 use Nette\Localization\Translator;
 
