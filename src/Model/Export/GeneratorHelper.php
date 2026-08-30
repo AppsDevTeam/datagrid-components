@@ -31,6 +31,12 @@ final class GeneratorHelper
 		return [$rows, $cols];
 	}
 
+	/** Radky agregatove sekce (pole poli) vs. nactene entity */
+	public static function isRawRows(array $items): bool
+	{
+		return $items !== [] && is_array(reset($items));
+	}
+
 	public static function fileName(string $identifier): string
 	{
 		// posledni CamelCase slovo pryc (historicke chovani normalizeGridName)

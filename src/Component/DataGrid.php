@@ -8,6 +8,7 @@ use ADT\Datagrid\Model\Export\CsvExportGenerator;
 use ADT\Datagrid\Model\Export\ExcelExportGenerator;
 use ADT\Exporter\Model\Service\Exporter;
 use ADT\Exporter\Model\Service\ExportRequest;
+use ADT\Exporter\Model\Service\ExportSection;
 use ADT\Datagrid\Model\Export\Excel\ExportExcel;
 use ADT\Datagrid\Model\Queries\GridFilterQueryFactory;
 use ADT\DoctrineComponents\EntityManager;
@@ -176,8 +177,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 				// vcetne stavu filtru; nad syncRowLimit background + e-mail)
 				$log = $this->exporter->export(new ExportRequest(
 					identifier: $this->gridName,
-					source: $dataSource->getQueryObject(),
-					columns: $columns,
+					sections: new ExportSection('items', $dataSource->getQueryObject(), $columns),
 					generator: $export instanceof \Contributte\Datagrid\Export\ExportCsv && !$export instanceof \ADT\Datagrid\Model\Export\Excel\ExportExcel
 						? $this->csvExportGenerator
 						: $this->excelExportGenerator,

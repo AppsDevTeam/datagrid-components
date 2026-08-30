@@ -21,13 +21,19 @@ final readonly class ExcelExportGenerator implements ExportFileGenerator
 {
 	public function __construct(private Translator $translator) {}
 
-	public function generate(array $items, array $columns, string $identifier): string
+	public function generate(array $sections, string $identifier): string
 	{
-		[$rows, $cols] = GeneratorHelper::buildRowsAndColumns($items, $columns);
-
-		$data = new ExcelDataModel($rows, $cols, $this->translator)->getSimpleData();
 		$writer = new XLSXWriter();
-		$writer->writeSheet($data);
+		foreach ($sections as $name => $section) {
+			if (GeneratorHelper::isRawRows($section['items'])) {
+				// agregatova sekce: radky jsou hotove (snapshot z auditu)
+				$data = array_merge([array_values($section['columns'])], array_values($section['items']));
+			} else {
+				[$rows, $cols] = GeneratorHelper::buildRowsAndColumns($section['items'], $section['columns']);
+				$data = new ExcelDataModel($rows, $cols, $this->translator)->getSimpleData();
+			}
+			$writer->writeSheet($data, mb_substr($name, 0, 31)); // Excel limit nazvu sheetu
+		}
 
 		$path = tempnam(sys_get_temp_dir(), 'export') . '_' . GeneratorHelper::fileName($identifier) . '.xlsx';
 		file_put_contents($path, $writer->writeToString());

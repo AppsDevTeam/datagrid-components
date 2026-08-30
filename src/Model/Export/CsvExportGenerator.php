@@ -13,11 +13,19 @@ final readonly class CsvExportGenerator implements ExportFileGenerator
 {
 	public function __construct(private Translator $translator) {}
 
-	public function generate(array $items, array $columns, string $identifier): string
+	public function generate(array $sections, string $identifier): string
 	{
-		[$rows, $cols] = GeneratorHelper::buildRowsAndColumns($items, $columns);
+		if (count($sections) !== 1) {
+			throw new \InvalidArgumentException('CSV export podporuje prave jednu sekci - pro vice sekci pouzij Excel.');
+		}
+		$section = reset($sections);
 
-		$data = new CsvDataModel($rows, $cols, $this->translator)->getSimpleData();
+		if (GeneratorHelper::isRawRows($section['items'])) {
+			$data = array_merge([array_values($section['columns'])], array_values($section['items']));
+		} else {
+			[$rows, $cols] = GeneratorHelper::buildRowsAndColumns($section['items'], $section['columns']);
+			$data = new CsvDataModel($rows, $cols, $this->translator)->getSimpleData();
+		}
 		$stream = fopen('php://memory', 'w');
 		foreach ($data as $row) {
 			fputcsv($stream, $row, escape: '"');
