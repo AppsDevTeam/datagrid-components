@@ -175,7 +175,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 				// audit + doruceni resi adt/exporter (ExportLog vznika VZDY,
 				// vcetne stavu filtru; nad syncRowLimit background + e-mail)
-				$log = $this->exporter->export(new ExportRequest(
+				$exportRecord = $this->exporter->export(new ExportRequest(
 					identifier: $this->gridName,
 					sections: new ExportSection('items', $dataSource->getQueryObject(), $columns),
 					generator: $export instanceof \Contributte\Datagrid\Export\ExportCsv && !$export instanceof \ADT\Datagrid\Model\Export\Excel\ExportExcel
@@ -185,11 +185,11 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 					filters: $export->isFiltered() ? $this->assembleFilters() : [],
 				));
 
-				if ($log->isInBackground()) {
+				if ($exportRecord->isInBackground()) {
 					$this->getPresenter()->flashMessageInfo('Export will be processed in background and sent to your email when finished.');
 					$this->redirect('this');
 				} else {
-					$this->getPresenter()->sendResponse(new FileResponse($log->getFile(), basename($log->getFile())));
+					$this->getPresenter()->sendResponse(new FileResponse($this->exporter->getFilePath($exportRecord), $exportRecord->getFileName()));
 				}
 			};
 		}
