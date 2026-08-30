@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace ADT\Datagrid\Component;
 
 use ADT\Application\BasePresenter;
-use ADT\Datagrid\Model\Service\DatagridService;
+use ADT\Datagrid\Model\Export\CsvExportGenerator;
+use ADT\Datagrid\Model\Export\ExcelExportGenerator;
+use ADT\Exporter\Model\Service\Exporter;
 use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use Closure;
@@ -37,7 +39,13 @@ abstract class BaseGrid extends Control
 	use BaseGridDependencies;
 
 	#[Autowire]
-	protected DatagridService $datagridService;
+	protected Exporter $exporter;
+
+	#[Autowire]
+	protected ExcelExportGenerator $excelExportGenerator;
+
+	#[Autowire]
+	protected CsvExportGenerator $csvExportGenerator;
 
 	/** @var callable */
 	protected $onDelete;
@@ -83,7 +91,7 @@ abstract class BaseGrid extends Control
 		$grid = new ($this->getDataGridClass())();
 		$grid->setTranslator($this->getTranslator());
 		$grid->setEntityManager($this->getEntityManager());
-		$grid->setDatagridService($this->datagridService);
+		$grid->setExporter($this->exporter, $this->excelExportGenerator, $this->csvExportGenerator);
 		$grid->setGridFilterQueryFactory($this->getGridFilterQueryFactory());
 		$grid->setOuterFilterRendering();
 		$grid->setEmail($this->getEmail());
