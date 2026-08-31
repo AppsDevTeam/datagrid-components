@@ -173,8 +173,9 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 					];
 				}, $this->columns);
 
-				// audit + doruceni resi adt/exporter (ExportLog vznika VZDY,
-				// vcetne stavu filtru; nad syncRowLimit background + e-mail)
+				// audit + doruceni resi adt/exporter (ExportLog vznika VZDY;
+				// nad syncRowLimit background + e-mail). Filtry se nepredavaji
+				// - audit si je vezme z DQL query objektu, ktera skutecne bezi
 				$exportRecord = $this->exporter->export(new ExportRequest(
 					identifier: $this->gridName,
 					sections: new ExportSection('items', $dataSource->getQueryObject(), $columns),
@@ -182,7 +183,6 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 						? $this->csvExportGenerator
 						: $this->excelExportGenerator,
 					email: $this->email,
-					filters: $export->isFiltered() ? $this->assembleFilters() : [],
 				));
 
 				if ($exportRecord->isInBackground()) {
