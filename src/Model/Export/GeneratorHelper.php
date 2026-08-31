@@ -37,10 +37,19 @@ final class GeneratorHelper
 		return $items !== [] && is_array(reset($items));
 	}
 
-	public static function fileName(string $identifier): string
+	/**
+	 * Zaklad nazvu exportu z gridName ("Portal:Backoffice:Product-productGrid"
+	 * -> "product"). Pouziva se pro nazev souboru, nazev sheetu i nazev sekce
+	 * v auditu, aby vsechny tri nesly jedno jmeno.
+	 */
+	public static function baseName(string $identifier): string
 	{
 		// posledni CamelCase slovo pryc (historicke chovani normalizeGridName)
-		$base = preg_replace('/[A-Z][a-z]*$/', '', explode('-', $identifier)[1] ?? $identifier) ?: $identifier;
-		return $base . '_' . date('Y-m-d_H-i');
+		return preg_replace('/[A-Z][a-z]*$/', '', explode('-', $identifier)[1] ?? $identifier) ?: $identifier;
+	}
+
+	public static function fileName(string $identifier): string
+	{
+		return self::baseName($identifier) . '_' . date('Y-m-d_H-i');
 	}
 }

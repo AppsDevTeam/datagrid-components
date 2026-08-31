@@ -6,6 +6,7 @@ namespace ADT\Datagrid\Component;
 
 use ADT\Datagrid\Model\Export\CsvExportGenerator;
 use ADT\Datagrid\Model\Export\ExcelExportGenerator;
+use ADT\Datagrid\Model\Export\GeneratorHelper;
 use ADT\Exporter\Model\Service\Exporter;
 use ADT\Exporter\Model\Service\ExportRequest;
 use ADT\Exporter\Model\Service\ExportSection;
@@ -178,7 +179,9 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 				// - audit si je vezme z DQL query objektu, ktera skutecne bezi
 				$exportRecord = $this->exporter->export(new ExportRequest(
 					identifier: $this->gridName,
-					sections: new ExportSection('items', $dataSource->getQueryObject(), $columns),
+					// nazev sekce = nazev sheetu = zaklad nazvu souboru: uzivatel
+					// stahne product_....xlsx a najde v nem list "product"
+					sections: new ExportSection(GeneratorHelper::baseName($this->gridName), $dataSource->getQueryObject(), $columns),
 					generator: $export instanceof \Contributte\Datagrid\Export\ExportCsv && !$export instanceof \ADT\Datagrid\Model\Export\Excel\ExportExcel
 						? $this->csvExportGenerator
 						: $this->excelExportGenerator,
