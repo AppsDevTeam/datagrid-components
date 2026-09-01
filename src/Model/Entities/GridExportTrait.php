@@ -8,6 +8,7 @@ use ADT\Files\Entities\File;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
+/** @deprecated viz GridExport */
 trait GridExportTrait
 {
 	#[ORM\Column(nullable: false)]

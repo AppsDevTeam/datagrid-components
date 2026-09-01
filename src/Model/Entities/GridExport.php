@@ -8,6 +8,7 @@ use ADT\DoctrineComponents\Entities\Entity;
 use ADT\Files\Entities\File;
 use DateTimeImmutable;
 
+/** @deprecated export audit resi ExportLog z adt/exporter; entita zustava jen kvuli historickym zaznamum */
 interface GridExport extends Entity
 {
 	public function getGrid(): string;

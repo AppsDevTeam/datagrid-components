@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace ADT\Datagrid\Component;
 
-use ADT\Datagrid\Model\Entities\GridExport;
+use ADT\Datagrid\Model\Export\CsvExportGenerator;
+use ADT\Datagrid\Model\Export\ExcelExportGenerator;
+use ADT\Datagrid\Model\Export\GeneratorHelper;
+use ADT\Exporter\Model\Service\Exporter;
+use ADT\Exporter\Model\Service\ExportRequest;
+use ADT\Exporter\Model\Service\ExportSection;
 use ADT\Datagrid\Model\Export\Excel\ExportExcel;
 use ADT\Datagrid\Model\Queries\GridFilterQueryFactory;
-use ADT\Datagrid\Model\Service\DatagridService;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
@@ -43,7 +47,9 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 	protected GridFilterQueryFactory $gridFilterQueryFactory;
 	protected EntityManager $em;
-	protected DatagridService $datagridService;
+	protected Exporter $exporter;
+	protected ExcelExportGenerator $excelExportGenerator;
+	protected CsvExportGenerator $csvExportGenerator;
 	protected string $templateType = self::TEMPLATE_DEFAULT;
 	protected array $classes = [];
 	protected array $htmlDataAttributes = [];
@@ -168,26 +174,25 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 					];
 				}, $this->columns);
 
-				/** @var GridExport $gridExport */
-				$gridExport = new ($this->em->findEntityClassByInterface(GridExport::class));
-				$gridExport->setColumns($columns);
-				$gridExport->setValue(array_values($dataSource->getQueryObject()->fetchField('id')));
-				$gridExport->setGrid($this->gridName);
-				$gridExport->setEntityClass($this->getDataSource()->getQueryObject()->getEntityClass());
-				$gridExport->setExportClass(get_class($export));
-				$gridExport->setEmail($this->email);
-				$this->em->persist($gridExport);
+				// audit + doruceni resi adt/exporter (ExportLog vznika VZDY;
+				// nad syncRowLimit background + e-mail). Filtry se nepredavaji
+				// - audit si je vezme z DQL query objektu, ktera skutecne bezi
+				$exportRecord = $this->exporter->export(new ExportRequest(
+					identifier: $this->gridName,
+					// nazev sekce = nazev sheetu = zaklad nazvu souboru: uzivatel
+					// stahne product_....xlsx a najde v nem list "product"
+					sections: new ExportSection(GeneratorHelper::baseName($this->gridName), $dataSource->getQueryObject(), $columns),
+					generator: $export instanceof \Contributte\Datagrid\Export\ExportCsv && !$export instanceof \ADT\Datagrid\Model\Export\Excel\ExportExcel
+						? $this->csvExportGenerator
+						: $this->excelExportGenerator,
+					email: $this->email,
+				));
 
-				if ($dataSource->getCount() > 1000) {
-					$gridExport->setInBackground(true);
-					$this->em->flush();
-
+				if ($exportRecord->isInBackground()) {
 					$this->getPresenter()->flashMessageInfo('Export will be processed in background and sent to your email when finished.');
 					$this->redirect('this');
 				} else {
-					$this->datagridService->saveFile($gridExport, $dataSource->getData());
-
-					$this->getPresenter()->sendResponse(new FileResponse($gridExport->getFile()->getPath(), $gridExport->getFile()->getOriginalName()));
+					$this->getPresenter()->sendResponse(new FileResponse($this->exporter->getFilePath($exportRecord), $exportRecord->getFileName()));
 				}
 			};
 		}
@@ -581,9 +586,11 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $this;
 	}
 
-	public function setDatagridService(DatagridService $datagridService): static
+	public function setExporter(Exporter $exporter, ExcelExportGenerator $excel, CsvExportGenerator $csv): static
 	{
-		$this->datagridService = $datagridService;
+		$this->exporter = $exporter;
+		$this->excelExportGenerator = $excel;
+		$this->csvExportGenerator = $csv;
 		return $this;
 	}
 
