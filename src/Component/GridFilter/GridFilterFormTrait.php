@@ -107,9 +107,7 @@ trait GridFilterFormTrait
 
 		$defaults = [];
 		if (!$gridFilter) {
-			$defaults['value'] = !empty($this->grid->getGrid()->getParameters()['filter']['advancedSearch'])
-				? Json::decode($this->grid->getGrid()->getParameters()['filter']['advancedSearch'], forceArrays: true)
-				: [];
+			$defaults['value'] = DataGrid::decodeAdvancedSearch($this->grid->getGrid()->getParameters()['filter']['advancedSearch'] ?? null);
 
 			// Datumy jsou v parametrech gridu serializovane jako pole (date/timezone/timezone_type).
 			// DateTimeControl takove pole neprijme, takze bez prevodu zpatky na DateTimeImmutable
