@@ -34,6 +34,7 @@ use Nette\Application\Responses\FileResponse;
 use Nette\Application\UI\Form;
 use Nette\Utils\DateTime;
 use Nette\Utils\Json;
+use Nette\Utils\JsonException;
 
 class DataGrid extends \Contributte\Datagrid\Datagrid
 {
@@ -479,8 +480,41 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 			});
 		$this->addFilterText('advancedSearch', '')
 			->setCondition(function (QueryObject $query, $value) {
-				$this->applyAdvancedFilter($query, Json::decode($value, forceArrays: true));
+				$this->applyAdvancedFilter($query, static::decodeAdvancedSearch($value));
 			});
+	}
+
+	/**
+	 * Hodnota pokrocileho filtru se predava v URL, takze v ni muze byt cokoliv - roboti
+	 * a chybne odkazy sem posilaji obycejny text, ktery neni validni JSON. Nesmyslny
+	 * vstup se proto ignoruje misto toho, aby cela stranka spadla na vyjimku.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function decodeAdvancedSearch(mixed $value): array
+	{
+		if (!is_string($value) || $value === '') {
+			return [];
+		}
+
+		try {
+			$decoded = Json::decode($value, forceArrays: true);
+		} catch (JsonException) {
+			return [];
+		}
+
+		if (!is_array($decoded)) {
+			return [];
+		}
+
+		return array_values(array_filter(
+			$decoded,
+			fn ($item) => is_array($item)
+				&& isset($item['label'], $item['operator'])
+				&& is_string($item['label'])
+				&& is_string($item['operator'])
+				&& array_key_exists('value', $item)
+		));
 	}
 
 	/**
@@ -518,6 +552,12 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 				'bw' => QueryObjectByMode::BETWEEN,
 				'nbw' => QueryObjectByMode::NOT_BETWEEN,
 			];
+
+			// Stejne jako cela hodnota filtru muze i nazev sloupce a operator prijit z URL,
+			// takze nemusi odpovidat nicemu, co grid zna.
+			if (!isset($operatorMap[$searchFilter['operator']], $this->filters[$searchFilter['label']])) {
+				continue;
+			}
 
 			if (!empty($searchFilter['value2'])) {
 				$value = [
