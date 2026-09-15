@@ -27,7 +27,7 @@ final readonly class CsvExportGenerator implements ExportFileGenerator
 			$data = new CsvDataModel($rows, $cols, $this->translator)->getSimpleData();
 		}
 		$stream = fopen('php://memory', 'w');
-		foreach ($data as $row) {
+		foreach (FormulaGuard::escapeRows($data) as $row) {
 			fputcsv($stream, $row, escape: '"');
 		}
 		rewind($stream);

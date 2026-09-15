@@ -6,7 +6,7 @@ use Nette\Application\Response;
 use Nette\Http\IRequest as HttpRequest;
 use Nette\Http\IResponse as HttpResponse;
 use Tracy\Debugger;
-use XLSXWriter;
+use ADT\Datagrid\Model\Export\Excel\SafeXlsxWriter;
 
 /**
  * CSV file download response
@@ -66,7 +66,7 @@ class ExcelResponse implements Response
 			ob_start();
 		}
 
-		$writer = new XLSXWriter();
+		$writer = new SafeXlsxWriter();
 		$writer->writeSheet($this->data);
 		$writer->writeToStdOut();
 

@@ -10,7 +10,7 @@ use Contributte\Datagrid\Datagrid;
 use Contributte\Datagrid\Row;
 use Contributte\Datagrid\Column\ColumnDateTime;
 use Nette\Localization\Translator;
-use XLSXWriter;
+use ADT\Datagrid\Model\Export\Excel\SafeXlsxWriter;
 
 /**
  * Excel generator pro adt/exporter - extrahovano z drivejsi
@@ -23,7 +23,7 @@ final readonly class ExcelExportGenerator implements ExportFileGenerator
 
 	public function generate(array $sections, string $identifier): string
 	{
-		$writer = new XLSXWriter();
+		$writer = new SafeXlsxWriter();
 		foreach ($sections as $name => $section) {
 			if (GeneratorHelper::isRawRows($section['items'])) {
 				// agregatova sekce: radky jsou hotove (snapshot z auditu)
