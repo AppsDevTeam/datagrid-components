@@ -23,7 +23,7 @@ use ADT\Utils\Utils;
 use Contributte\Datagrid\Column\ColumnDateTime;
 use Contributte\Datagrid\Column\ColumnNumber;
 use Contributte\Datagrid\Exception\DataGridException;
-use Contributte\Datagrid\Export\ExportCsv;
+use ADT\Datagrid\Model\Export\Csv\ExportCsv;
 use Contributte\Datagrid\Filter\Filter;
 use Contributte\Datagrid\Filter\FilterMultiSelect;
 use Contributte\Datagrid\Filter\FilterSelect;
@@ -319,8 +319,11 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		bool $filtered = true
 	): ExportCsv
 	{
-		return parent::addExportCsv('', $csvFileName, $outputEncoding, $delimiter, $includeBom, $filtered)
-			->setIcon('file-export');
+		// Vlastni ExportCsv misto parent::addExportCsv() kvuli ochrane proti formula
+		// injection - viz Model\Export\FormulaGuard.
+		$export = new ExportCsv($this, '', $csvFileName, $filtered, $outputEncoding, $delimiter, $includeBom);
+		$this->addToExports($export)->setIcon('file-export');
+		return $export;
 	}
 
 	public function addExportExcel(

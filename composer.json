@@ -24,5 +24,11 @@
     "psr-4": {
       "ADT\\Datagrid\\": "src/"
     }
+  },
+  "require-dev": {
+    "nette/tester": "^2.5"
+  },
+  "scripts": {
+    "test": "tester -C tests"
   }
 }
