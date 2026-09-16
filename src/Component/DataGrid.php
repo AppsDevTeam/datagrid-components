@@ -139,10 +139,29 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->template->toolbarButons = $this->toolbarButtons;
 		$this->template->isActiveValue = $this->isActiveValue;
 		$this->template->switcherValues = $this->switcherValues;
+		$this->template->exportsBelowFilters = $this->areExportsBelowFilters();
 		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetch();
 		$this->template->parentTemplate = $this->parentTemplate;
 
 		parent::render();
+	}
+
+	/**
+	 * Kdyby v hornim radku zustal jen export, vykresli se az pod filtry, tesne nad tabulkou.
+	 */
+	protected function areExportsBelowFilters(): bool
+	{
+		if (!$this->exports || isset($this->filters['search']) || isset($this->filters['advancedSearch'])) {
+			return false;
+		}
+
+		foreach (array_keys($this->switcherValues) as $_switcherKey) {
+			if (isset($this->filters[$_switcherKey])) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
