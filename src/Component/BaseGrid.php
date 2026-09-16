@@ -134,6 +134,7 @@ abstract class BaseGrid extends Control
 		if ($this->allowEdit() && (!$this->allowEdit()->acl || $this->getSecurityUser()->isAllowed($this->allowEdit()->acl))) {
 			$grid->addAction('edit', '')
 				->setIcon('edit')
+				->setTitle($this->getTranslator()->translate('ublaboo_datagrid.edit'))
 				->setClass('ajax datagrid-edit');
 		}
 
