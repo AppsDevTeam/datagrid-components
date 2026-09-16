@@ -62,7 +62,7 @@
 							{/ifset}
 						{/ifset}
 
-						<div n:snippet="advanced-filter" class="d-flex justify-content-end align-items-end">
+						<div n:snippet="advanced-filter" class="d-flex justify-content-end align-items-end ms-auto">
 							<div n:if="isset($filters['advancedSearch'])" data-adt-dashboard-filter>
 								<div n:class="btn-group, dropdown-filter, ($control->isFilterActive('advancedSearch') || $selectedGridFilter) ? selected">
 									<a href="{$control->getParent()->link('editAdvancedFilter!', ['editId' => $selectedGridFilter?->getId()])}" class="btn">
