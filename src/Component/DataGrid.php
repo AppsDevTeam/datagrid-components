@@ -11,6 +11,7 @@ use ADT\Exporter\Model\Service\Exporter;
 use ADT\Exporter\Model\Service\ExportRequest;
 use ADT\Exporter\Model\Service\ExportSection;
 use ADT\Datagrid\Model\Export\Excel\ExportExcel;
+use ADT\Datagrid\Model\Export\Excel\Model\ExcelDataModel;
 use ADT\Datagrid\Model\Queries\GridFilterQueryFactory;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
@@ -25,6 +26,7 @@ use Contributte\Datagrid\Column\ColumnNumber;
 use Contributte\Datagrid\Exception\DataGridException;
 use ADT\Datagrid\Model\Export\Csv\ExportCsv;
 use Contributte\Datagrid\Filter\Filter;
+use Contributte\Datagrid\Row;
 use Contributte\Datagrid\Filter\FilterMultiSelect;
 use Contributte\Datagrid\Filter\FilterSelect;
 use Contributte\Datagrid\Utils\ArraysHelper;
@@ -167,13 +169,34 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$dataSource = $this->dataModel->getDataSource();
 		if ($dataSource instanceof QueryObjectDataSource) {
 			$this->dataModel->onAfterFilter[] = function() use ($dataSource, $export) {
-				$columns = array_map(function ($column) {
-					return [
-						'name' => $column->getName(),
-						'column' => $column->getColumn(),
-						'class' => get_class($column),
-					];
-				}, $this->columns);
+				$queryObject = $dataSource->getQueryObject();
+
+				// Grid nad pocitanymi skalary (vlastni select, radek = pole) nema entity, ktere by
+				// export mohl znovu nacist podle ID - sloupce jako soucty ci per-sklad hodnoty na
+				// entite neexistuji a rekonstruovane sloupce bez rendereru by na nich spadly
+				// (PropertyAccessor). Takovy grid se exportuje pres VYRENDEROVANE radky: skutecnymi
+				// sloupci gridu vcetne rendereru, exporteru se predaji jako raw rows (ulozi se primo
+				// do provozniho zaznamu, background uz nic nedopocitava). Audit i doruceni beze zmeny.
+				// Pozna se peekem prvniho radku - entitni hydratace vraci objekty, skalarni pole.
+				$peek = $queryObject->fetch(1);
+				if ($peek !== [] && is_array(reset($peek))) {
+					$rows = [];
+					foreach ($queryObject->fetch() as $_item) {
+						$rows[] = new Row($this, $_item, $this->primaryKey);
+					}
+					$excelDataModel = new ExcelDataModel($rows, $this->columns, $this->getTranslator());
+					$source = $excelDataModel->getSimpleData(false);
+					$columns = $excelDataModel->getHeader();
+				} else {
+					$source = $queryObject;
+					$columns = array_map(function ($column) {
+						return [
+							'name' => $column->getName(),
+							'column' => $column->getColumn(),
+							'class' => get_class($column),
+						];
+					}, $this->columns);
+				}
 
 				// audit + doruceni resi adt/exporter (ExportLog vznika VZDY;
 				// nad syncRowLimit background + e-mail). Filtry se nepredavaji
@@ -182,7 +205,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 					identifier: $this->gridName,
 					// nazev sekce = nazev sheetu = zaklad nazvu souboru: uzivatel
 					// stahne product_....xlsx a najde v nem list "product"
-					sections: new ExportSection(GeneratorHelper::baseName($this->gridName), $dataSource->getQueryObject(), $columns),
+					sections: new ExportSection(GeneratorHelper::baseName($this->gridName), $source, $columns),
 					generator: $export instanceof \Contributte\Datagrid\Export\ExportCsv && !$export instanceof \ADT\Datagrid\Model\Export\Excel\ExportExcel
 						? $this->csvExportGenerator
 						: $this->excelExportGenerator,
