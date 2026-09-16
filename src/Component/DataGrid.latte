@@ -45,7 +45,23 @@
 					</div>
 					*}
 
-					<div n:snippet="outer-filters" n:if="isset($filters['search']) || isset($filters['advancedSearch']) || $exports" class="main-search-filter">
+					{var $hasSwitcherFilters = false}
+					{foreach $switcherValues as $switcherKey => $_}
+						{if isset($filters[$switcherKey])}{var $hasSwitcherFilters = true}{/if}
+					{/foreach}
+
+					{* Kdyby v hornim radku zustal jen export, vykresli se az pod filtry, tesne nad tabulkou. *}
+					{var $exportsBelowFilters = $exports && !isset($filters['search']) && !isset($filters['advancedSearch']) && !$hasSwitcherFilters}
+
+					{define exports-area}
+						<span class="datagrid-exports" n:if="$exports" n:snippet="exports" n:block="exports">
+							{foreach $exports as $export}
+								{$export->setClass('btn noajax')->render()}
+							{/foreach}
+						</span>
+					{/define}
+
+					<div n:snippet="outer-filters" n:if="isset($filters['search']) || isset($filters['advancedSearch']) || $hasSwitcherFilters || ($exports && !$exportsBelowFilters)" class="main-search-filter">
 						{var $form = $control['filter']}
 						{ifset $filters['search']}
 							{var $filter_block = 'filter-' . $filters['search']->getKey()}
@@ -114,11 +130,7 @@
 								</div>
 							</div>
 
-							<span class="datagrid-exports" n:if="$exports" n:snippet="exports" n:block="exports">
-								{foreach $exports as $export}
-									{$export->setClass('btn noajax')->render()}
-								{/foreach}
-							</span>
+							{if !$exportsBelowFilters}{include exports-area}{/if}
 							{block switchers}
 							    {snippet switchers}
                                     {var $form = $control['filter']}
@@ -191,6 +203,10 @@
 
 								<div class="advanced-filter"></div>
 							{/ifset}
+
+							{if $exportsBelowFilters}
+								<div class="ms-auto d-flex align-items-end">{include exports-area}</div>
+							{/if}
 						</div>
 					</div>
 				{/block}
