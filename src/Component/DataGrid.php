@@ -18,6 +18,7 @@ use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\Forms\BootstrapFormRenderer;
+use ADT\Datagrid\Filter\FilterPeriod;
 use ADT\Datagrid\Filter\FilterSwitcher;
 use ADT\QueryObjectDataSource\QueryObjectDataSource;
 use ADT\Utils\Utils;
@@ -151,6 +152,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->template->parentTemplate = $this->parentTemplate;
 		$this->template->infiniteScroll = $this->infiniteScroll;
 		$this->template->infinityPage = $this->getInfinityPage();
+		$this->template->periodFilters = $this->getPeriodFilters();
 
 		parent::render();
 	}
@@ -201,6 +203,37 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 		$paginator->setPage(1);
 		$paginator->setItemsPerPage($perPage * $this->getInfinityPage());
+	}
+
+	public function isSearchActive(): bool
+	{
+		foreach ($this->filter as $key => $value) {
+			if ($key === 'isActive' || isset($this->switcherValues[$key])) {
+				continue;
+			}
+
+			if (($this->filters[$key] ?? null) instanceof FilterPeriod) {
+				continue;
+			}
+
+			$isEmpty = is_iterable($value)
+				? ArraysHelper::testEmpty($value)
+				: ($value === '' || $value === null || $value === false);
+
+			if (!$isEmpty) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * @return array<string, FilterPeriod>
+	 */
+	protected function getPeriodFilters(): array
+	{
+		return array_filter($this->filters, fn (Filter $filter) => $filter instanceof FilterPeriod);
 	}
 
 	/**
@@ -526,6 +559,43 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $this->filters[$key] = new FilterSwitcher($this, $key, $this->translator->translate($name), $column);
 	}
 
+	/**
+	 * @throws DatagridException
+	 */
+	public function addFilterPeriod(
+		string $key,
+		string $name,
+		?string $column = null
+	): FilterPeriod
+	{
+		$column ??= $key;
+
+		$this->addFilterCheck($key);
+
+		$filter = $this->filters[$key] = new FilterPeriod($this, $key, $this->translator->translate($name), $column);
+
+		$filter->setCondition(function (QueryObject $query, mixed $value) use ($column, $filter): void {
+			if (!$this->isSearchActive()) {
+				return;
+			}
+
+			[$from, $to] = $filter->getRange();
+
+			if ($from === null && $to === null) {
+				return;
+			}
+
+			$query->by($column, [$from, $to], QueryObjectByMode::BETWEEN);
+		});
+
+		$postFilter = $this->getPresenter()->getRequest()->getPost('filter');
+		if (!isset($this->filter[$key]) && !isset($postFilter[$key])) {
+			$this->filter[$key] = ['period' => FilterPeriod::DEFAULT_PERIOD];
+		}
+
+		return $filter;
+	}
+
 	public function isFilterActive(?string $filter = null): bool
 	{
 		$filters = $filter ? [$filter => ($this->filter[$filter] ?? null)] : $this->filter;
@@ -736,8 +806,25 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $this;
 	}
 
+	public const string PERIOD_FILTERS_SNIPPET = 'periodFilters';
+
+	/**
+	 * @param list<string> $snippets
+	 * @return list<string>
+	 */
+	public function getReloadSnippets(array $snippets = []): array
+	{
+		if ($this->getPeriodFilters() && !in_array(self::PERIOD_FILTERS_SNIPPET, $snippets, true)) {
+			$snippets[] = self::PERIOD_FILTERS_SNIPPET;
+		}
+
+		return $snippets;
+	}
+
 	public function reload(array $snippets = []): void
 	{
+		$snippets = $this->getReloadSnippets($snippets);
+
 		if ($this->getPresenter()->isAjax()) {
 			parent::reload($snippets);
 		} else {
@@ -751,6 +838,9 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		unset ($filters['search']);
 		unset ($filters['advancedSearch']);
 		unset ($filters[static::SELECTED_GRID_FILTER_KEY]);
+
+		$filters = array_filter($filters, fn (Filter $filter) => !$filter instanceof FilterPeriod);
+
 		$fields = [];
 		foreach ($filters as $_filter) {
 			$field = [
