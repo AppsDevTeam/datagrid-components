@@ -37,6 +37,7 @@ use Nette\Application\UI\Form;
 use Nette\Utils\DateTime;
 use Nette\Utils\Json;
 use Nette\Utils\JsonException;
+use Nette\Utils\Paginator;
 
 class DataGrid extends \Contributte\Datagrid\Datagrid
 {
@@ -113,8 +114,12 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		);
 		$paginator = $component->getPaginator();
 
-		$paginator->setPage($this->page);
-		$paginator->setItemsPerPage($this->getPerPage());
+		if ($this->infiniteScroll) {
+			$this->applyInfiniteScrollWindow($paginator);
+		} else {
+			$paginator->setPage($this->page);
+			$paginator->setItemsPerPage($this->getPerPage());
+		}
 
 		return $component;
 	}
@@ -145,13 +150,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid($this->gridName)->fetch();
 		$this->template->parentTemplate = $this->parentTemplate;
 		$this->template->infiniteScroll = $this->infiniteScroll;
-		$this->template->infinityPage = $this->infinityPage ?? $this->page;
-
-		if ($this->infiniteScroll && $this->dataModel !== null) {
-			$this->dataModel->onAfterPaginated[] = function (): void {
-				$this->template->showLoadMoreButton = $this->showLoadMoreButton();
-			};
-		}
+		$this->template->infinityPage = $this->getInfinityPage();
 
 		parent::render();
 	}
@@ -170,21 +169,38 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	public function handleLoadMore(int $page): void
 	{
 		$this->infinityPage = $page + 1;
-		$this->getPaginator()?->getPaginator()->setPage($this->infinityPage);
 		$this->redrawControl('tbody');
 		$this->redrawControl('pagination');
 	}
 
-	protected function showLoadMoreButton(): bool
+	public function showLoadMoreButton(): bool
 	{
 		$paginatorComponent = $this->getPaginator();
-		if ($paginatorComponent === null) {
+
+		if ($paginatorComponent === null || !is_int($this->getPerPage())) {
 			return false;
 		}
 
 		$paginator = $paginatorComponent->getPaginator();
 
-		return ($paginator->getItemsPerPage() * $paginator->getPage()) < $paginator->getItemCount();
+		return $paginator->getItemsPerPage() < $paginator->getItemCount();
+	}
+
+	protected function getInfinityPage(): int
+	{
+		return $this->infinityPage ?? 1;
+	}
+
+	protected function applyInfiniteScrollWindow(Paginator $paginator): void
+	{
+		$perPage = $this->getPerPage();
+
+		if (!is_int($perPage)) {
+			return;
+		}
+
+		$paginator->setPage(1);
+		$paginator->setItemsPerPage($perPage * $this->getInfinityPage());
 	}
 
 	/**

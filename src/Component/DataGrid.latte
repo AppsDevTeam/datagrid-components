@@ -313,7 +313,7 @@
 					</thead>
 
 					{block tbody}
-					<tbody n:snippet="tbody" {if $control->isSortable()}data-sortable data-sortable-url="{plink $control->getSortableHandler()}" data-sortable-parent-path="{$control->getSortableParentPath()}"{/} {if $infiniteScroll}data-ajax-append{/if}>
+					<tbody n:snippet="tbody" {if $control->isSortable()}data-sortable data-sortable-url="{plink $control->getSortableHandler()}" data-sortable-parent-path="{$control->getSortableParentPath()}"{/}>
 						{snippetArea items}
 							{if $inlineAdd && $inlineAdd->isPositionTop()}
 								{ifset #inlineAddRow}
@@ -520,9 +520,7 @@
 									</div>*}
 									<div class="col-pagination text-center">
 										{if $infiniteScroll}
-											{default $showLoadMoreButton = true}
-											{default $infinityPage = 1}
-											<a n:if="$showLoadMoreButton" n:href="loadMore! page => $infinityPage" n:class="ajax, btn, btn-primary, infinite-scroll">
+											<a n:if="$control->showLoadMoreButton()" n:href="loadMore! page => $infinityPage" n:class="ajax, btn, btn-primary, infinite-scroll">
 												{='ublaboo_datagrid.load_more'|translate}
 											</a>
 										{else}
