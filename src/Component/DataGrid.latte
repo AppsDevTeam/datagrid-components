@@ -73,13 +73,6 @@
 					<div n:snippet="outer-filters" n:if="isset($filters['search']) || isset($filters['advancedSearch']) || $periodFilters || ($exports && !$exportsBelowFilters)" class="main-search-filter">
 						{var $form = $control['filter']}
 
-						{snippet periodFilters}
-							{var $form = $control['filter']}
-							{foreach $periodFilters as $periodFilter}
-								{include $periodFilter->getTemplate(), filter => $periodFilter, input => $form['filter'][$periodFilter->getKey()], outer => TRUE}
-							{/foreach}
-						{/snippet}
-
 						{ifset $filters['search']}
 							{var $filter_block = 'filter-' . $filters['search']->getKey()}
 							{var $filter_type_block = 'filtertype-' . $filters['search']->getType()}
@@ -96,6 +89,13 @@
 						{/ifset}
 
 						<div n:snippet="advanced-filter" class="d-flex justify-content-end align-items-end ms-auto">
+							{snippet periodFilters}
+								{var $form = $control['filter']}
+								{foreach $periodFilters as $periodFilter}
+									{include $periodFilter->getTemplate(), filter => $periodFilter, input => $form['filter'][$periodFilter->getKey()], outer => TRUE}
+								{/foreach}
+							{/snippet}
+
 							<div n:if="isset($filters['advancedSearch'])" data-adt-dashboard-filter>
 								<div n:class="btn-group, dropdown-filter, ($control->isFilterActive('advancedSearch') || $selectedGridFilter) ? selected">
 									<a href="{$control->getParent()->link('editAdvancedFilter!', ['editId' => $selectedGridFilter?->getId()])}" class="btn">

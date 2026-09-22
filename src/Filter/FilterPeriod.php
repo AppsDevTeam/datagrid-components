@@ -40,18 +40,10 @@ class FilterPeriod extends OneColumnFilter implements IFilterDate
 	{
 		$container = $container->addContainer($this->key);
 
-		$options = [];
-		foreach (array_keys(self::PERIODS) as $_period) {
-			$options[$_period] = 'ublaboo_datagrid.period.' . $_period;
-		}
-
-		$period = $container->addSelect('period', $this->name, $options);
-
 		$range = $container->addText('range', $this->name)
 			->setHtmlAttribute('readonly', 'readonly')
 			->setHtmlAttribute('data-adt-daterange', $this->getPickerOptions());
 
-		$this->addAttributes($period);
 		$this->addAttributes($range);
 
 		if ($this->grid->hasAutoSubmit()) {
@@ -64,27 +56,70 @@ class FilterPeriod extends OneColumnFilter implements IFilterDate
 	 */
 	protected function getPickerOptions(): array
 	{
-		$translate = fn (string $key): string => $this->grid->getTranslator()->translate('ublaboo_datagrid.period.' . $key);
-
 		return [
 			'locale' => [
 				'format' => self::PICKER_FORMAT,
-				'applyLabel' => $translate('apply'),
-				'cancelLabel' => $translate('cancel'),
+				'applyLabel' => $this->translatePeriod('apply'),
+				'cancelLabel' => $this->translatePeriod('cancel'),
+				'customRangeLabel' => $this->translatePeriod(self::CUSTOM),
 			],
-			'ranges' => [],
-			'showCustomRangeLabel' => false,
-			'alwaysShowCalendars' => true,
+			'ranges' => $this->getPickerRanges(),
 		];
+	}
+
+	/**
+	 * @return array<string, array{label: string, range: array{0: string, 1: string}}>
+	 */
+	protected function getPickerRanges(): array
+	{
+		$now = new \DateTimeImmutable();
+
+		$ranges = [];
+		foreach (self::PERIODS as $_period => $_modify) {
+			if ($_modify === null) {
+				continue;
+			}
+
+			$ranges[$_period] = [
+				'label' => $this->translatePeriod($_period),
+				'range' => [
+					$now->modify($_modify)->format(self::PHP_FORMATS[0]),
+					$now->format(self::PHP_FORMATS[0]),
+				],
+			];
+		}
+
+		return $ranges;
+	}
+
+	protected function translatePeriod(string $key): string
+	{
+		return $this->grid->getTranslator()->translate('ublaboo_datagrid.period.' . $key);
 	}
 
 	public function getPeriod(): string
 	{
-		$period = $this->getValues()['period'] ?? null;
+		$text = $this->getRawRange();
 
-		return is_string($period) && array_key_exists($period, self::PERIODS)
-			? $period
-			: self::DEFAULT_PERIOD;
+		foreach (self::PERIODS as $_period => $_modify) {
+			if ($_modify !== null && $this->translatePeriod($_period) === $text) {
+				return $_period;
+			}
+		}
+
+		return str_contains($text, self::RANGE_DELIMITER) ? self::CUSTOM : self::DEFAULT_PERIOD;
+	}
+
+	public function getDefaultRangeText(): string
+	{
+		return $this->translatePeriod(self::DEFAULT_PERIOD);
+	}
+
+	private function getRawRange(): string
+	{
+		$value = $this->getValues()['range'] ?? '';
+
+		return is_string($value) ? trim($value) : '';
 	}
 
 	/**
@@ -109,17 +144,7 @@ class FilterPeriod extends OneColumnFilter implements IFilterDate
 
 	public function getRangeText(): string
 	{
-		$typed = $this->getValues()['range'] ?? '';
-
-		if (is_string($typed) && $typed !== '') {
-			return $typed;
-		}
-
-		[$from, $to] = $this->getRange();
-
-		return ($from ?? new \DateTimeImmutable())->format($this->getPhpFormat())
-			. self::RANGE_DELIMITER
-			. ($to ?? new \DateTimeImmutable())->format($this->getPhpFormat());
+		return $this->getRawRange() ?: $this->getDefaultRangeText();
 	}
 
 	/**

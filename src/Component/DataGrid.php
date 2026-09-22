@@ -24,6 +24,7 @@ use ADT\QueryObjectDataSource\QueryObjectDataSource;
 use ADT\Utils\Utils;
 use Contributte\Datagrid\Column\ColumnDateTime;
 use Contributte\Datagrid\Column\ColumnNumber;
+use Contributte\Datagrid\Components\DatagridPaginator\DatagridPaginator;
 use Contributte\Datagrid\Exception\DataGridException;
 use ADT\Datagrid\Model\Export\Csv\ExportCsv;
 use Contributte\Datagrid\Filter\Filter;
@@ -38,7 +39,6 @@ use Nette\Application\UI\Form;
 use Nette\Utils\DateTime;
 use Nette\Utils\Json;
 use Nette\Utils\JsonException;
-use Nette\Utils\Paginator;
 
 class DataGrid extends \Contributte\Datagrid\Datagrid
 {
@@ -68,6 +68,10 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	protected ?string $parentTemplate = null;
 	protected bool $infiniteScroll = false;
 	protected ?int $infinityPage = null;
+
+	protected ?bool $hasMoreRows = null;
+
+	protected bool $isRenderingRows = false;
 
 	public function getSessionData(?string $key = null, mixed $defaultValue = null): array
 	{
@@ -114,15 +118,38 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 			static::$iconPrefix,
 		);
 		$paginator = $component->getPaginator();
-
-		if ($this->infiniteScroll) {
-			$this->applyInfiniteScrollWindow($paginator);
-		} else {
-			$paginator->setPage($this->page);
-			$paginator->setItemsPerPage($this->getPerPage());
-		}
+		$paginator->setPage($this->page);
+		$paginator->setItemsPerPage($this->getPerPage());
 
 		return $component;
+	}
+
+	public function getPaginator(): ?DatagridPaginator
+	{
+		return $this->infiniteScroll ? null : parent::getPaginator();
+	}
+
+	public function setDataSource(mixed $source): static
+	{
+		parent::setDataSource($source);
+
+		$dataSource = $this->dataModel->getDataSource();
+
+		if ($dataSource instanceof QueryObjectDataSource) {
+			$previousSortCallback = $dataSource->sortCallback;
+
+			$dataSource->setSortCallback(function (...$args) use ($dataSource, $previousSortCallback): void {
+				if (is_callable($previousSortCallback)) {
+					$previousSortCallback(...$args);
+				}
+
+				if ($this->infiniteScroll && $this->isRenderingRows) {
+					$this->applyInfiniteScrollWindow($dataSource);
+				}
+			});
+		}
+
+		return $this;
 	}
 
 	/**
@@ -154,7 +181,12 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		$this->template->infinityPage = $this->getInfinityPage();
 		$this->template->periodFilters = $this->getPeriodFilters();
 
-		parent::render();
+		$this->isRenderingRows = true;
+		try {
+			parent::render();
+		} finally {
+			$this->isRenderingRows = false;
+		}
 	}
 
 	public function setInfiniteScroll(bool $infiniteScroll): static
@@ -177,15 +209,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 	public function showLoadMoreButton(): bool
 	{
-		$paginatorComponent = $this->getPaginator();
-
-		if ($paginatorComponent === null || !is_int($this->getPerPage())) {
-			return false;
-		}
-
-		$paginator = $paginatorComponent->getPaginator();
-
-		return $paginator->getItemsPerPage() < $paginator->getItemCount();
+		return $this->hasMoreRows === true;
 	}
 
 	protected function getInfinityPage(): int
@@ -193,7 +217,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $this->infinityPage ?? 1;
 	}
 
-	protected function applyInfiniteScrollWindow(Paginator $paginator): void
+	protected function applyInfiniteScrollWindow(QueryObjectDataSource $dataSource): void
 	{
 		$perPage = $this->getPerPage();
 
@@ -201,8 +225,14 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 			return;
 		}
 
-		$paginator->setPage(1);
-		$paginator->setItemsPerPage($perPage * $this->getInfinityPage());
+		$window = $perPage * $this->getInfinityPage();
+
+		$dataSource->limit(0, $window + 1);
+		$rows = $dataSource->getData();
+
+		$this->hasMoreRows = count($rows) > $window;
+
+		$dataSource->setData(array_slice($rows, 0, $window));
 	}
 
 	public function isSearchActive(): bool
@@ -590,7 +620,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 		$postFilter = $this->getPresenter()->getRequest()->getPost('filter');
 		if (!isset($this->filter[$key]) && !isset($postFilter[$key])) {
-			$this->filter[$key] = ['period' => FilterPeriod::DEFAULT_PERIOD];
+			$this->filter[$key] = ['range' => $filter->getDefaultRangeText()];
 		}
 
 		return $filter;
