@@ -45,6 +45,23 @@
 					</div>
 					*}
 
+					{define filter-search}
+						<div class="form-group-filter grid-filter-search mr-2 mb-3">
+							<div class="grid-filter-search__field">
+								{ADT\Datagrid\Component\FilterInput::render($input, [
+									'class' => 'form-control text',
+									'placeholder' => $translator->translate('ublaboo_datagrid.search'),
+								])|noescape}
+								<a n:href="resetColumnFilter! key => $filter->getKey()"
+									class="ajax grid-filter-search__clear"
+									title="{$translator->translate('ublaboo_datagrid.search_clear')}"
+								>
+									<i class="fa-solid fa-xmark"></i>
+								</a>
+							</div>
+						</div>
+					{/define}
+
 					{define exports-area}
 						<span class="datagrid-exports" n:if="$exports" n:snippet="exports" n:block="exports">
 							{foreach $exports as $export}
@@ -53,14 +70,15 @@
 						</span>
 					{/define}
 
-					<div n:snippet="outer-filters" n:if="isset($filters['search']) || isset($filters['advancedSearch']) || ($exports && !$exportsBelowFilters)" class="main-search-filter">
+					<div n:snippet="outer-filters" n:if="isset($filters['search']) || isset($filters['advancedSearch']) || $periodFilters || ($exports && !$exportsBelowFilters)" class="main-search-filter">
 						{var $form = $control['filter']}
+
 						{ifset $filters['search']}
 							{var $filter_block = 'filter-' . $filters['search']->getKey()}
 							{var $filter_type_block = 'filtertype-' . $filters['search']->getType()}
 
 							{ifset #$filter_block}
-								{include #$filter_block, filter => $filters['search'], input => $form['filter'][$f->getKey()], outer => TRUE}
+								{include #$filter_block, filter => $filters['search'], input => $form['filter'][$filters['search']->getKey()], outer => TRUE}
 							{else}
 								{ifset #$filter_type_block}
 									{include #$filter_type_block, filter => $filters['search'], input => $form['filter'][$filters['search']->getKey()], outer => TRUE}
@@ -71,6 +89,13 @@
 						{/ifset}
 
 						<div n:snippet="advanced-filter" class="d-flex justify-content-end align-items-end ms-auto">
+							{snippet periodFilters}
+								{var $form = $control['filter']}
+								{foreach $periodFilters as $periodFilter}
+									{include $periodFilter->getTemplate(), filter => $periodFilter, input => $form['filter'][$periodFilter->getKey()], outer => TRUE}
+								{/foreach}
+							{/snippet}
+
 							<div n:if="isset($filters['advancedSearch'])" data-adt-dashboard-filter>
 								<div n:class="btn-group, dropdown-filter, ($control->isFilterActive('advancedSearch') || $selectedGridFilter) ? selected">
 									<a href="{$control->getParent()->link('editAdvancedFilter!', ['editId' => $selectedGridFilter?->getId()])}" class="btn">
@@ -157,7 +182,7 @@
 								{var $i = 0}
 								{var $filter_columns_class = 'col-sm-' . (12 / $control->getOuterFilterColumnsCount())}
 								{foreach $filters as $filterName => $f}
-									{continueIf in_array($filterName, ['search', 'isActive']) || isset($switcherValues[$filterName])}
+									{continueIf in_array($filterName, ['search', 'isActive']) || isset($switcherValues[$filterName]) || isset($periodFilters[$filterName])}
 									{**
 									 * Each fitler is rendered separately in its own template
 									 *}
@@ -183,7 +208,7 @@
 									{var $filter_type_block = 'filtertype-' . $filters['advancedSearch']->getType()}
 
 									{ifset #$filter_block}
-										{include #$filter_block, filter => $filters['advancedSearch'], input => $form['filter'][$f->getKey()], outer => TRUE}
+										{include #$filter_block, filter => $filters['advancedSearch'], input => $form['filter'][$filters['advancedSearch']->getKey()], outer => TRUE}
 									{else}
 										{ifset #$filter_type_block}
 											{include #$filter_type_block, filter => $filters['advancedSearch'], input => $form['filter'][$filters['advancedSearch']->getKey()], outer => TRUE}
@@ -519,10 +544,16 @@
 										</span>
 									</div>*}
 									<div class="col-pagination text-center">
-										{**
-										* Pagination
-										*}
-										{control paginator}
+										{if $infiniteScroll}
+											<a n:if="$control->showLoadMoreButton()" n:href="loadMore! page => $infinityPage" n:class="ajax, btn, btn-primary, infinite-scroll">
+												{='ublaboo_datagrid.load_more'|translate}
+											</a>
+										{else}
+											{**
+											* Pagination
+											*}
+											{control paginator}
+										{/if}
 									</div>
 									<div class="col-per-page text-right d-none">
 										<a n:href="resetFilter!" n:class="ajax, btn-sm, reset-filter, !$filter_active ? 'd-none' : ''"><i class="fa fa-filter mr-1"></i>{_common.resetFilter}</a>

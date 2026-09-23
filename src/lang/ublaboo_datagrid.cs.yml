@@ -25,6 +25,7 @@ filter_submit_button: Filtrovat
 multiselect_selected: "{0} vybráno"
 per_page_submit: Změnit
 items_onPage: "Položek na stránce"
+load_more: "Načíst další"
 disable_is_active_filter: "Vyhledat i v neaktivních"
 delete.confirm: "Opravdu smazat?"
 delete.label: Smazat
@@ -64,3 +65,13 @@ advanced_search.add_condition: "Přidat podmínku"
 advanced_search.update_condition: "Aktualizovat podmínku"
 advanced_search.btn_submit: Odeslat
 advanced_search.btn_cancel: Zrušit
+period.label: "Období"
+period.day: "24 h"
+period.week: "7 dní"
+period.month: "Měsíc"
+period.quarter: "3 měsíce"
+period.custom: "Vlastní"
+period.apply: "Použít"
+period.cancel: "Zrušit"
+search: "Hledat"
+search_clear: "Zrušit hledání"

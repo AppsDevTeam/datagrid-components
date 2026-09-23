@@ -1,0 +1,15 @@
+{**
+ * @param ADT\Datagrid\Filter\FilterPeriod $filter
+ * @param Nette\Forms\Container            $input
+ * @param string                           $iconPrefix Icon prefix (fa fa-)
+ *}
+{varType ADT\Datagrid\Filter\FilterPeriod $filter}
+
+{var $container = $input}
+
+<div class="datagrid-filter-period">
+	{php $container['range']->setValue($filter->getRangeText())}
+	<div>
+		{input $container['range'], class => 'form-control'}
+	</div>
+</div>
