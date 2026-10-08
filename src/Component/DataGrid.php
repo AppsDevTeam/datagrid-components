@@ -592,10 +592,16 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	/**
 	 * @throws DatagridException
 	 */
+	/**
+	 * $defaultPeriod je predvybrane obdobi (FilterPeriod::DAY az QUARTER), $alwaysApply
+	 * omezi obdobi i bez aktivniho filtru - viz FilterPeriod::$alwaysApply.
+	 */
 	public function addFilterPeriod(
 		string $key,
 		string $name,
-		?string $column = null
+		?string $column = null,
+		?string $defaultPeriod = null,
+		bool $alwaysApply = false
 	): FilterPeriod
 	{
 		$column ??= $key;
@@ -604,8 +610,15 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 		$filter = $this->filters[$key] = new FilterPeriod($this, $key, $this->translator->translate($name), $column);
 
+		// pred predplnenim hodnoty filtru nize, aby se predplnilo uz vybrane obdobi
+		if ($defaultPeriod !== null) {
+			$filter->setDefaultPeriod($defaultPeriod);
+		}
+
+		$filter->setAlwaysApply($alwaysApply);
+
 		$filter->setCondition(function (QueryObject $query, mixed $value) use ($column, $filter): void {
-			if (!$this->isSearchActive()) {
+			if (!$filter->isAlwaysApplied() && !$this->isSearchActive()) {
 				return;
 			}
 

@@ -3,6 +3,7 @@
 namespace ADT\Datagrid\Filter;
 
 use Contributte\Datagrid\Exception\DatagridDateTimeHelperException;
+use Contributte\Datagrid\Exception\DatagridException;
 use Contributte\Datagrid\Filter\IFilterDate;
 use Contributte\Datagrid\Filter\OneColumnFilter;
 use Contributte\Datagrid\Utils\DateTimeHelper;
@@ -14,13 +15,21 @@ class FilterPeriod extends OneColumnFilter implements IFilterDate
 {
 	public const string CUSTOM = 'custom';
 
-	public const string DEFAULT_PERIOD = 'month';
+	public const string DAY = 'day';
+
+	public const string WEEK = 'week';
+
+	public const string MONTH = 'month';
+
+	public const string QUARTER = 'quarter';
+
+	public const string DEFAULT_PERIOD = self::MONTH;
 
 	public const array PERIODS = [
-		'day' => '-1 day',
-		'week' => '-7 days',
-		'month' => '-1 month',
-		'quarter' => '-3 months',
+		self::DAY => '-1 day',
+		self::WEEK => '-7 days',
+		self::MONTH => '-1 month',
+		self::QUARTER => '-3 months',
 		self::CUSTOM => null,
 	];
 
@@ -35,6 +44,51 @@ class FilterPeriod extends OneColumnFilter implements IFilterDate
 	public const array PHP_FORMATS = ['j.n.Y H:i', 'j.n.Y'];
 
 	protected array $format = ['j.n.Y', 'd.m.yyyy'];
+
+	protected string $defaultPeriod = self::DEFAULT_PERIOD;
+
+	/**
+	 * Omezit obdobi, i kdyz uzivatel nic nevyplnil.
+	 *
+	 * Grid, ktery se filtruje az ve query objektu (detail entity, modal), zadny aktivni
+	 * filtr nema - obdobi by se tak neuplatnilo prave tam, kde je potreba nejvic.
+	 */
+	protected bool $alwaysApply = false;
+
+	/**
+	 * @throws DatagridException
+	 */
+	public function setDefaultPeriod(string $period): static
+	{
+		if (!isset(self::PERIODS[$period]) || $period === self::CUSTOM) {
+			throw new DatagridException(sprintf(
+				'Default period must be one of "%s", "%s" given.',
+				implode('", "', array_keys(array_filter(self::PERIODS))),
+				$period,
+			));
+		}
+
+		$this->defaultPeriod = $period;
+
+		return $this;
+	}
+
+	public function getDefaultPeriod(): string
+	{
+		return $this->defaultPeriod;
+	}
+
+	public function setAlwaysApply(bool $alwaysApply = true): static
+	{
+		$this->alwaysApply = $alwaysApply;
+
+		return $this;
+	}
+
+	public function isAlwaysApplied(): bool
+	{
+		return $this->alwaysApply;
+	}
 
 	public function addToFormContainer(Container $container): void
 	{
@@ -107,12 +161,12 @@ class FilterPeriod extends OneColumnFilter implements IFilterDate
 			}
 		}
 
-		return str_contains($text, self::RANGE_DELIMITER) ? self::CUSTOM : self::DEFAULT_PERIOD;
+		return str_contains($text, self::RANGE_DELIMITER) ? self::CUSTOM : $this->defaultPeriod;
 	}
 
 	public function getDefaultRangeText(): string
 	{
-		return $this->translatePeriod(self::DEFAULT_PERIOD);
+		return $this->translatePeriod($this->defaultPeriod);
 	}
 
 	private function getRawRange(): string
@@ -136,7 +190,7 @@ class FilterPeriod extends OneColumnFilter implements IFilterDate
 		[$from, $to] = $this->parseRange($this->getValues()['range'] ?? null);
 
 		if ($from === null && $to === null) {
-			return [(new \DateTimeImmutable())->modify(self::PERIODS[self::DEFAULT_PERIOD]), null];
+			return [(new \DateTimeImmutable())->modify(self::PERIODS[$this->defaultPeriod]), null];
 		}
 
 		return [$from, $to];
