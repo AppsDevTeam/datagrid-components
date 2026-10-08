@@ -21,7 +21,7 @@
 {varType Ublaboo\DataGrid\Column\Action[] $actions}
 {varType Ublaboo\DataGrid\Column\Column[] $columns}
 
-<div class="datagrid datagrid-{$control->getName()} {implode(" ", $gridClasses)}" data-datagrid-name="{$control->getFullName()}" data-refresh-state="{link refreshState!}"
+<div class="datagrid datagrid-{$control->getName()} {implode(" ", $gridClasses)}{if $infiniteScroll} datagrid-infinite-scroll{/if}" data-datagrid-name="{$control->getFullName()}" data-refresh-state="{link refreshState!}"
 	{ifset $gridHtmlDataAttributes}{implode(" ", $gridHtmlDataAttributes)|noescape}{/ifset}
 >
 	{**
@@ -545,7 +545,7 @@
 									</div>*}
 									<div class="col-pagination text-center">
 										{if $infiniteScroll}
-											<a n:if="$control->showLoadMoreButton()" n:href="loadMore! page => $infinityPage" n:class="ajax, btn, btn-primary, infinite-scroll">
+											<a n:if="$control->showLoadMoreButton()" n:href="loadMore! page => $infinityPage" n:class="ajax, btn, btn-primary, infinite-scroll" data-datagrid-infinite-scroll data-ajax-off='["history"]'>
 												{='ublaboo_datagrid.load_more'|translate}
 											</a>
 										{else}
