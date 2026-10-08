@@ -246,16 +246,34 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 				continue;
 			}
 
-			$isEmpty = is_iterable($value)
-				? ArraysHelper::testEmpty($value)
-				: ($value === '' || $value === null || $value === false);
-
-			if (!$isEmpty) {
+			if (!$this->isFilterValueEmpty($value)) {
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	/**
+	 * Obdobi s $alwaysApply musi mit hodnotu vzdy - filtr bez hodnoty datagrid vubec
+	 * neuplatni a dotaz by sel pres celou historii.
+	 */
+	public function assembleFilters(): array
+	{
+		foreach ($this->getPeriodFilters() as $_key => $_filter) {
+			if ($_filter->isAlwaysApplied() && $this->isFilterValueEmpty($this->filter[$_key] ?? null)) {
+				$this->filter[$_key] = ['range' => $_filter->getDefaultRangeText()];
+			}
+		}
+
+		return parent::assembleFilters();
+	}
+
+	private function isFilterValueEmpty(mixed $value): bool
+	{
+		return is_iterable($value)
+			? ArraysHelper::testEmpty($value)
+			: ($value === '' || $value === null || $value === false);
 	}
 
 	/**
@@ -590,11 +608,10 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	}
 
 	/**
-	 * @throws DatagridException
-	 */
-	/**
 	 * $defaultPeriod je predvybrane obdobi (FilterPeriod::DAY az QUARTER), $alwaysApply
 	 * omezi obdobi i bez aktivniho filtru - viz FilterPeriod::$alwaysApply.
+	 *
+	 * @throws DatagridException
 	 */
 	public function addFilterPeriod(
 		string $key,
