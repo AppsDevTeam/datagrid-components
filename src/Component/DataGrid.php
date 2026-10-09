@@ -24,7 +24,7 @@ use ADT\QueryObjectDataSource\QueryObjectDataSource;
 use ADT\Utils\Utils;
 use Contributte\Datagrid\Column\ColumnDateTime;
 use Contributte\Datagrid\Column\ColumnNumber;
-use Contributte\Datagrid\Components\DatagridPaginator\DatagridPaginator;
+use Contributte\Datagrid\Components\DatagridPaginator\DatagridPaginator as ContributteDatagridPaginator;
 use Contributte\Datagrid\Exception\DataGridException;
 use ADT\Datagrid\Model\Export\Csv\ExportCsv;
 use Contributte\Datagrid\Filter\Filter;
@@ -124,7 +124,7 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $component;
 	}
 
-	public function getPaginator(): ?DatagridPaginator
+	public function getPaginator(): ?ContributteDatagridPaginator
 	{
 		return $this->infiniteScroll ? null : parent::getPaginator();
 	}
