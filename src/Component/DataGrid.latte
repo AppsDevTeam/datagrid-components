@@ -413,7 +413,7 @@
 															{include action}
 														{/if}
 													{/foreach}
-													{var $dropdownActions = array_filter($actions, fn($action) => !in_array($action->getClass($row), \ADT\Datagrid\Component\DataGrid::ACTION_NOT_DROPDOWN_ITEM, true) && $row->hasAction($key) && $action->shouldBeRendered($row))}
+													{var $dropdownActions = array_filter($actions, fn($action, $key) => !in_array($action->getClass($row), \ADT\Datagrid\Component\DataGrid::ACTION_NOT_DROPDOWN_ITEM, true) && $row->hasAction($key) && $action->shouldBeRendered($row), ARRAY_FILTER_USE_BOTH)}
 													{foreach $dropdownActions as $key => $action}
 														{if !$actionButtonRendered}
 															<button type="button" class="btn btn-sm" data-action="{$key}" data-bs-toggle="dropdown">
