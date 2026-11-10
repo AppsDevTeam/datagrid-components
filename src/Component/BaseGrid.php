@@ -253,29 +253,47 @@ abstract class BaseGrid extends Control
 		$previousId = $this->getParameter('prev_id');
 		$parentId = $this->getParameter('parent_id');
 		$item = $this->createQueryObject()->byId($itemId)->fetchOne();
+		$parentChanged = false;
 
 		if ($this->isTreeView()) {
 			$parent = $parentId ? $this->createQueryObject()->byId($parentId)->fetchOne() : null;
+			$getter = 'get' . ucfirst($this->treeViewParentProperty);
 			$setter = 'set' . ucfirst($this->treeViewParentProperty);
+			$parentChanged = $item->$getter() !== $parent;
 			$item->$setter($parent);
 		}
 
-		if ($previousId) {
-			$previousItem = $this->createQueryObject()->byId($previousId)->fetchOne();
-			$newPosition = $previousItem->getPosition() + 1;
-		} else if ($nextId) {
-			$nextItem = $this->createQueryObject()->byId($nextId)->fetchOne();
-			$newPosition = $nextItem->getPosition() - 1;
-		} else {
-			$newPosition = 0;
-		}
+		$previousPosition = $previousId ? $this->createQueryObject()->byId($previousId)->fetchOne()->getPosition() : null;
+		$nextPosition = !$previousId && $nextId ? $this->createQueryObject()->byId($nextId)->fetchOne()->getPosition() : null;
 
-		if ($newPosition < 0) {
-			$newPosition = 0;
-		}
-
-		$item->setPosition($newPosition);
+		$item->setPosition(static::getSortRowsPosition($item->getPosition(), $previousPosition, $nextPosition, $parentChanged));
 		$this->getEntityManager()->flush();
+	}
+
+	/**
+	 * Nova pozice pretazeneho radku: za predchozi radek (prev), a kdyz je radek prvni, pred nasledujici (next).
+	 *
+	 * Gedmo Sortable pri presunu v ramci skupiny posune radky mezi starou a novou pozici o jedno misto. Pri presunu
+	 * dolu se tak predchozi radek posune nahoru a pretazeny radek patri na jeho puvodni pozici, ne o jedno dal
+	 * (obdobne next pri presunu dolu bez predchoziho radku). Kdyz radek prechazi do jine skupiny (ve stromu pod jineho
+	 * rodice), jeho stara pozice se s pozicemi nove skupiny nesrovnava: patri za predchozi radek (prev + 1), nebo na
+	 * misto nasledujiciho (next).
+	 */
+	protected static function getSortRowsPosition(int $itemPosition, ?int $previousPosition, ?int $nextPosition, bool $groupChanged): int
+	{
+		if ($previousPosition !== null) {
+			$position = $groupChanged || $previousPosition < $itemPosition
+				? $previousPosition + 1
+				: $previousPosition;
+		} elseif ($nextPosition !== null) {
+			$position = !$groupChanged && $nextPosition > $itemPosition
+				? $nextPosition - 1
+				: $nextPosition;
+		} else {
+			$position = 0;
+		}
+
+		return max(0, $position);
 	}
 
 	/**
