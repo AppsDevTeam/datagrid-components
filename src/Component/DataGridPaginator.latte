@@ -7,30 +7,27 @@
 {var $link = [$control->getParent(), link]}
 
 <div>
-	{if $paginator->isFirst()}
-	<a class="first btn btn-sm btn-default disabled bg-white" style="padding-top: 7px!important;">
-		{else}
-		<a class="btn btn-sm btn-default ajax bg-white" href="{$link('page!', ['page' => $paginator->page - 1])}" rel="prev">
-			{/if}
-			<i n:block = "icon-arrow-left" class="{$iconPrefix}arrow-left"></i>
-		</a>
+	<a n:class="btn, btn-sm, btn-default, bg-white, $paginator->isFirst() ? 'first disabled' : ajax"
+		n:attr="href => $paginator->isFirst() ? null : $link('page!', ['page' => $paginator->page - 1]), rel => $paginator->isFirst() ? null : prev"
+		{if $paginator->isFirst()}style="padding-top: 7px!important;"{/if}>
+		<i n:block = "icon-arrow-left" class="{$iconPrefix}arrow-left"></i>
+	</a>
 
-		<div class="btn-group btn-group-sm">
-			{foreach $steps as $step}
-				{if $step == $paginator->page}
-					<a class="btn btn-sm btn-primary first active">{$step}</a>
-				{else}
-					<a class="btn btn-sm ajax bg-white" href="{$link('page!', ['page' => $step])}">{$step}</a>
-				{/if}
-
-				{if $iterator->nextValue > $step + 1}<span style="padding-top: 15px">…</span>{/if}
-			{/foreach}
-		</div>
-
-		{if $paginator->isLast()}
-		<a class="first btn btn-sm btn-default disabled bg-white">
+	<div class="btn-group btn-group-sm">
+		{foreach $steps as $step}
+			{if $step == $paginator->page}
+				<a class="btn btn-sm btn-primary first active">{$step}</a>
 			{else}
-			<a class="btn btn-sm btn-default ajax bg-white" style="padding-top: 7px!important;" href="{$link('page!', ['page' => $paginator->page + 1])}" rel="next">
-				{/if}
-				<i n:block = "icon-arrow-right" class="{$iconPrefix}arrow-right"></i></a>
+				<a class="btn btn-sm ajax bg-white" href="{$link('page!', ['page' => $step])}">{$step}</a>
+			{/if}
+
+			{if $iterator->nextValue > $step + 1}<span style="padding-top: 15px">…</span>{/if}
+		{/foreach}
+	</div>
+
+	<a n:class="btn, btn-sm, btn-default, bg-white, $paginator->isLast() ? 'first disabled' : ajax"
+		n:attr="href => $paginator->isLast() ? null : $link('page!', ['page' => $paginator->page + 1]), rel => $paginator->isLast() ? null : next"
+		{if !$paginator->isLast()}style="padding-top: 7px!important;"{/if}>
+		<i n:block = "icon-arrow-right" class="{$iconPrefix}arrow-right"></i>
+	</a>
 </div>

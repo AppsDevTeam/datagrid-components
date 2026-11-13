@@ -228,6 +228,35 @@
 					</div>
 				{/block}
 			{/if}
+			<div class="datagrid-settings d-flex justify-content-end mb-2" n:if="$control->canHideColumns()">
+				<div class="btn-group">
+					<button type="button" class="btn btn-sm {$btnSecondaryClass} dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{='ublaboo_datagrid.show_all_columns'|translate}">
+						<i class="{$iconPrefix}cog"></i>
+					</button>
+					<ul class="dropdown-menu dropdown-menu-end dropdown-menu--grid">
+						<li n:foreach="$columnsVisibility as $v_key => $visibility">
+							{if $visibility['visible']}
+								<a n:href="hideColumn!, column => $v_key" class="ajax dropdown-item">
+									<i class="{$iconPrefix}check-square"></i>
+									{include #column-header, column => $visibility['column'], key => $v_key}
+								</a>
+							{else}
+								<a n:href="showColumn!, column => $v_key" class="ajax dropdown-item">
+									<i class="{$iconPrefix}square"></i>
+									{include #column-header, column => $visibility['column'], key => $v_key}
+								</a>
+							{/if}
+						</li>
+						<li role="separator" class="divider dropdown-divider"></li>
+						<li>
+							<a n:href="showAllColumns!" class="ajax dropdown-item"><i class="{$iconPrefix}eye"></i> {='ublaboo_datagrid.show_all_columns'|translate}</a>
+						</li>
+						<li n:if="$control->hasSomeColumnDefaultHide()">
+							<a n:href="showDefaultColumns!" class="ajax dropdown-item"><i class="{$iconPrefix}repeat"></i> {='ublaboo_datagrid.show_default_columns'|translate}</a>
+						</li>
+					</ul>
+				</div>
+			</div>
 			<div class="table-responsive-wrapper">
 			<div class="table-responsive">
 				<table class="{*{block table-class}table table-hover{/block}*}" n:snippet="table" n:block="data">
@@ -293,7 +322,7 @@
 									</div>
 								{$th->endTag()|noescape}
 							{/foreach}
-							<th n:if="$actions || $control->isSortable() || $inlineEdit || $inlineAdd" class="col-action text-center">
+							<th n:if="$actions || $control->isSortable() || $inlineEdit || $inlineAdd || $itemsDetail" class="col-action text-center">
 								{*='ublaboo_datagrid.action'|translate*}
 							</th>
 						</tr>
@@ -321,7 +350,7 @@
 								{/if}
 								{$th->endTag()|noescape}
 							{/foreach}
-							<th n:if="$actions || $control->isSortable() || $inlineEdit || $inlineAdd" class="col-action text-center">
+							<th n:if="$actions || $control->isSortable() || $inlineEdit || $inlineAdd || $itemsDetail" class="col-action text-center">
 								{if !$control->hasAutoSubmit() && !$control->hasOuterFilterRendering()}
 									{input $filter['filter']['submit']}
 								{/if}
@@ -331,7 +360,7 @@
 							{include header_after}
 						{/ifset}
 						<tr>
-							<th class="table-header-divider" colspan="{count($columns) + ($actions || $control->isSortable() || $inlineEdit || $inlineAdd ? 1 : 0)}">
+							<th class="table-header-divider" colspan="{count($columns) + ($actions || $control->isSortable() || $inlineEdit || $inlineAdd || $itemsDetail ? 1 : 0)}">
 								<div></div>
 							</th>
 						</tr>
@@ -355,7 +384,7 @@
 									{if $inlineEdit && $inlineEdit->getItemId() == $row->getId()}
 										{php $inlineEdit->onSetDefaults($filter['inline_edit'], $item)}
 
-										<tr data-id="{$row->getId()}" n:snippet="item-{$row->getId()}" n:class="$row->getControlClass()">
+										<tr data-id="{$row->getId()}" n:snippet="item-{$row->getId()}" n:attr="$row->getControl()->attrs">
 											<td n:if="$hasGroupActions" class="col-checkbox"></td>
 
 											{foreach $columns as $key => $column}
@@ -386,7 +415,7 @@
 											</td>
 										</tr>
 									{else}
-										<tr data-id="{$row->getId()}" n:snippet="item-{$row->getId()}" n:class="$row->getControlClass()">
+										<tr data-id="{$row->getId()}" n:snippet="item-{$row->getId()}" n:attr="$row->getControl()->attrs">
 											<td n:if="$hasGroupActions" class="col-checkbox">
 												{if $row->hasGroupAction()}
 													<div class="form-check">
@@ -405,7 +434,7 @@
 													</div>
 												{$td->endTag()|noescape}
 											{/foreach}
-											<td n:if="$actions || $control->isSortable() || $inlineEdit || $inlineAdd" class="col-action dropdown">
+											<td n:if="$actions || $control->isSortable() || $inlineEdit || $inlineAdd || $itemsDetail" class="col-action dropdown">
 												<div>
 													{php $actionButtonRendered = false}
 													{foreach array_filter($actions, fn($action) => in_array($action->getClass($row), ADT\Datagrid\Component\DataGrid::ACTION_NOT_DROPDOWN_ITEM, true)) as $key => $action}
@@ -414,26 +443,24 @@
 														{/if}
 													{/foreach}
 													{var $dropdownActions = array_filter($actions, fn($action, $key) => !in_array($action->getClass($row), \ADT\Datagrid\Component\DataGrid::ACTION_NOT_DROPDOWN_ITEM, true) && $row->hasAction($key) && $action->shouldBeRendered($row), \ARRAY_FILTER_USE_BOTH)}
-													{foreach $dropdownActions as $key => $action}
-														{if !$actionButtonRendered}
-															<button type="button" class="btn btn-sm" data-action="{$key}" data-bs-toggle="dropdown">
-																<i class="fa fa-ellipsis-h"></i>
-															</button>
-															<div class="dropdown-menu dropdown-menu-right">
-
-															{php $actionButtonRendered = true}
-														{/if}
-
-														{include action}
-														{if $actionButtonRendered && $iterator->isLast()}
-															</div>
-														{/if}
-													{/foreach}
+													{if $dropdownActions}
+														<button type="button" class="btn btn-sm" data-action="{array_key_first($dropdownActions)}" data-bs-toggle="dropdown">
+															<i class="fa fa-ellipsis-h"></i>
+														</button>
+														<div class="dropdown-menu dropdown-menu-right">
+															{foreach $dropdownActions as $key => $action}
+																{include action}
+															{/foreach}
+														</div>
+													{/if}
 													<span class="handle-sort btn btn-xs btn-default" n:if="$control->isSortable()">
 														<i n:block = "icon-arrows-v" class="{$iconPrefix}arrows-v"></i>
 													</span>
 													{if $inlineEdit && $row->hasInlineEdit()}
 														{$inlineEdit->renderButton($row)|noescape}
+													{/if}
+													{if $itemsDetail && $itemsDetail->shouldBeRendered($row)}
+														{$itemsDetail->renderButton($row)|noescape}
 													{/if}
 												</div>
 											</td>
@@ -445,7 +472,7 @@
 								 * Item detail
 								 *}
 								{if $itemsDetail}
-									<tr class="row-item-detail item-detail-{$row->getId()}" n:snippet="item-{$row->getId()}-detail">
+									<tr class="row-item-detail item-detail-{$row->getId()} item-detail-{$control->getFullname()}-id-{$row->getId()}" n:snippet="item-{$row->getId()}-detail">
 										{if true}
 											{var $item_detail_params = ['item' => $item, '_form' => $filter] + $itemsDetail->getTemplateVariables()}
 
@@ -495,7 +522,7 @@
 									{include aggregationFunctions, columns => $columns}
 								{/if}
 
-								<td n:if="$actions || $control->isSortable() || $inlineEdit || $inlineAdd" class="col-action"></td>
+								<td n:if="$actions || $control->isSortable() || $inlineEdit || $inlineAdd || $itemsDetail" class="col-action"></td>
 							</tr>
 
 							{block noItems}
@@ -636,12 +663,12 @@
 		{var $td = $column->getElementForRender('td', $key)}
 
 		{$td->startTag()|noescape}
-			{if $aggregation_functions}
-				{ifset $aggregation_functions[$key]}
-					{$aggregation_functions[$key]->renderResult()|noescape}
+			{if $aggregationFunctions}
+				{ifset $aggregationFunctions[$key]}
+					{$aggregationFunctions[$key]->renderResult()|noescape}
 				{/ifset}
 			{else}
-				{$multiple_aggregation_function->renderResult($key)|noescape}
+				{$multipleAggregationFunction->renderResult($key)|noescape}
 			{/if}
 		{$td->endTag()|noescape}
 	{/foreach}
