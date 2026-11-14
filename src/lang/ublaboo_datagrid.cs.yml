@@ -27,8 +27,11 @@ per_page_submit: Změnit
 items_onPage: "Položek na stránce"
 load_more: "Načíst další"
 disable_is_active_filter: "Vyhledat i v neaktivních"
+is_active.label: Aktivní
+is_active.title: "Zobrazit i neaktivní"
 delete.confirm: "Opravdu smazat?"
 delete.label: Smazat
+delete.in_use: "Záznam nelze smazat, je navázaný na další data."
 yes: "Ano"
 no: "Ne"
 advanced_search.submit: Filtrovat

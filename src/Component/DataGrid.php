@@ -524,13 +524,13 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	{
 		$this->addSwitcher(
 			'isActive',
-			'app.forms.global.isActive.label',
+			'ublaboo_datagrid.is_active.label',
 			function (IsActiveFilter $query, $value) {
 				if (!$value) {
 					$query->disableIsActiveFilter();
 				}
 			},
-			title: 'app.forms.global.isActive.title'
+			title: 'ublaboo_datagrid.is_active.title'
 		);
 
 		$this->isActiveValue = $this->switcherValues['isActive'];

@@ -330,7 +330,7 @@ abstract class BaseGrid extends Control
 			$this->getEntityManager()->flush();
 			$this->getPresenter()->flashMessageSuccess('action.delete.yes');
 		} else {
-			$this->getPresenter()->flashMessageError('app.grids.flashes.cantDelete');
+			$this->getPresenter()->flashMessageError('ublaboo_datagrid.delete.in_use');
 		}
 	}
 
@@ -406,7 +406,7 @@ abstract class BaseGrid extends Control
 			$order[] = 'isActive';
 		}
 
-		$grid->addColumnText('isActive', 'app.forms.global.isActive.label');
+		$grid->addColumnText('isActive', 'ublaboo_datagrid.is_active.label');
 		$grid->setColumnsOrder($order);
 		$grid->addIsActiveSwitcher();
 

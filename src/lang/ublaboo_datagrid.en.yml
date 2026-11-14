@@ -27,8 +27,11 @@ per_page_submit: Change
 items_onPage: "Items on page"
 load_more: "Load more"
 disable_is_active_filter: "Search also in inactive"
+is_active.label: Active
+is_active.title: "Show inactive too"
 delete.confirm: "Do you really want to delete this item?"
 delete.label: Delete
+delete.in_use: "The item cannot be deleted, other data refer to it."
 yes: "Yes"
 no: "No"
 advanced_search.submit: Filter

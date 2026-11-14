@@ -1,0 +1,4 @@
+# contributte/datagrid 7 translates the multiselect filter in this domain (ublaboo_datagrid has the
+# same keys for the older versions)
+multiselect_choose: Vyberte
+multiselect_selected: "{0} vybráno"
