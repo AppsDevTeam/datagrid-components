@@ -722,8 +722,10 @@
 	{/if}
 {/define}
 
+{* Without the boolIcon filter of the project - colours of the theme (text-*), not hard-coded inline styles *}
 {define col-isActive}
-	{$item->getIsActive()|boolIcon}
+	{var $isActive = $item->getIsActive()}
+	<i n:class="$isActive === null ? 'fa-regular fa-square text-muted' : ($isActive ? 'fa-solid fa-square-check text-success' : 'fa-solid fa-square-xmark text-danger')"></i>
 {/define}
 
 {include gridScript}
