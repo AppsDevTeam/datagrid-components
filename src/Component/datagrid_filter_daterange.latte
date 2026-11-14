@@ -21,12 +21,12 @@
 {else}
 	<div class="datagrid-col-filter-date-range form-inline">
 		<div class="input-group">
-			{input $container['from'], data-dateinput-type => 'datetime', placeholder => $translator->translate('common.from')}
+			{input $container['from'], data-dateinput-type => 'datetime', placeholder => $translator->translate('ublaboo_datagrid.date_range.from')}
 			<label n:name="$container['from']" class="input-group-addon input-group-addon-first ml-1"><i class="{$iconPrefix}calendar"></i></label>
 
 			<div class="input-group-addon datagrid-col-filter-datte-range-delimiter">-</div>
 
-			{input $container['to'], data-dateinput-type => 'datetime', placeholder => $translator->translate('common.to')}
+			{input $container['to'], data-dateinput-type => 'datetime', placeholder => $translator->translate('ublaboo_datagrid.date_range.to')}
 			<label n:name="$container['to']" class="input-group-addon ml-1"><i class="{$iconPrefix}calendar"></i></label>
 		</div>
 	</div>

@@ -328,7 +328,7 @@ abstract class BaseGrid extends Control
 		if ($this->getEntityManager()->isPossibleToDeleteEntity($entity)) {
 			$this->getEntityManager()->remove($entity);
 			$this->getEntityManager()->flush();
-			$this->getPresenter()->flashMessageSuccess('action.delete.yes');
+			$this->getPresenter()->flashMessageSuccess('ublaboo_datagrid.delete.done');
 		} else {
 			$this->getPresenter()->flashMessageError('ublaboo_datagrid.delete.in_use');
 		}
@@ -427,7 +427,7 @@ abstract class BaseGrid extends Control
 
 		$this->getEntityManager()->remove($gridFilter);
 		$this->getEntityManager()->flush();
-		$this->getPresenter()->flashMessageSuccess('action.delete.yes');
+		$this->getPresenter()->flashMessageSuccess('ublaboo_datagrid.delete.done');
 
 		$this->getGrid()->handleResetAdvancedFilter();
 	}

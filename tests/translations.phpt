@@ -43,6 +43,7 @@ test('klice gridu maji preklad v cs i en', function () {
 	$keys = usedKeys('ublaboo_datagrid');
 	Assert::contains('is_active.label', $keys);
 	Assert::contains('delete.in_use', $keys);
+	Assert::contains('delete.done', $keys);
 
 	foreach (['cs', 'en'] as $lang) {
 		$catalog = loadCatalog(__DIR__ . "/../src/lang/ublaboo_datagrid.$lang.yml");
