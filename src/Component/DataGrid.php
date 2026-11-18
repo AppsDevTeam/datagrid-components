@@ -26,6 +26,7 @@ use Contributte\Datagrid\Column\ColumnDateTime;
 use Contributte\Datagrid\Column\ColumnNumber;
 use Contributte\Datagrid\Components\DatagridPaginator\DatagridPaginator as ContributteDatagridPaginator;
 use Contributte\Datagrid\Exception\DataGridException;
+use Contributte\Datagrid\Export\Export;
 use ADT\Datagrid\Model\Export\Csv\ExportCsv;
 use Contributte\Datagrid\Filter\Filter;
 use Contributte\Datagrid\Row;
@@ -331,50 +332,21 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 				// Grid nad pocitanymi skalary (vlastni select, radek = pole) nema entity, ktere by
 				// export mohl znovu nacist podle ID - sloupce jako soucty ci per-sklad hodnoty na
 				// entite neexistuji a rekonstruovane sloupce bez rendereru by na nich spadly
-				// (PropertyAccessor). Takovy grid se exportuje pres VYRENDEROVANE radky: skutecnymi
-				// sloupci gridu vcetne rendereru, exporteru se predaji jako raw rows (ulozi se primo
-				// do provozniho zaznamu, background uz nic nedopocitava). Audit i doruceni beze zmeny.
-				// Pozna se peekem prvniho radku - entitni hydratace vraci objekty, skalarni pole.
+				// (PropertyAccessor). Takovy grid se exportuje pres vyrenderovane radky (viz
+				// exportRenderedItems). Pozna se peekem prvniho radku - entitni hydratace vraci
+				// objekty, skalarni pole.
 				$peek = $queryObject->fetch(1);
 				if ($peek !== [] && is_array(reset($peek))) {
-					$rows = [];
-					foreach ($queryObject->fetch() as $_item) {
-						$rows[] = new Row($this, $_item, $this->primaryKey);
-					}
-					$excelDataModel = new ExcelDataModel($rows, $this->columns, $this->getTranslator());
-					$source = $excelDataModel->getSimpleData(false);
-					$columns = $excelDataModel->getHeader();
-				} else {
-					$source = $queryObject;
-					$columns = array_map(function ($column) {
-						return [
-							'name' => $column->getName(),
-							'column' => $column->getColumn(),
-							'class' => get_class($column),
-						];
-					}, $this->columns);
+					$this->exportRenderedItems($queryObject->fetch(), $export);
 				}
 
-				// audit + doruceni resi adt/exporter (ExportLog vznika VZDY;
-				// nad syncRowLimit background + e-mail). Filtry se nepredavaji
-				// - audit si je vezme z DQL query objektu, ktera skutecne bezi
-				$exportRecord = $this->exporter->export(new ExportRequest(
-					identifier: $this->gridName,
-					// nazev sekce = nazev sheetu = zaklad nazvu souboru: uzivatel
-					// stahne product_....xlsx a najde v nem list "product"
-					sections: new ExportSection(GeneratorHelper::baseName($this->gridName), $source, $columns),
-					generator: $export instanceof \Contributte\Datagrid\Export\ExportCsv && !$export instanceof \ADT\Datagrid\Model\Export\Excel\ExportExcel
-						? $this->csvExportGenerator
-						: $this->excelExportGenerator,
-					email: $this->email,
-				));
-
-				if ($exportRecord->isInBackground()) {
-					$this->getPresenter()->flashMessageInfo('Export will be processed in background and sent to your email when finished.');
-					$this->redirect('this');
-				} else {
-					$this->getPresenter()->sendResponse(new FileResponse($this->exporter->getFilePath($exportRecord), $exportRecord->getFileName()));
-				}
+				$this->sendExport($export, $queryObject, array_map(function ($column) {
+					return [
+						'name' => $column->getName(),
+						'column' => $column->getColumn(),
+						'class' => get_class($column),
+					];
+				}, $this->columns));
 			};
 		}
 
@@ -391,11 +363,54 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 			$filter = [];
 		}
 
-		$this->dataModel->filterData(
+		$items = $this->dataModel->filterData(
 			null,
 			$this->createSorting($sort, $this->sortCallback),
 			$filter
 		);
+
+		// Jiny zdroj nez query object (pole, vlastni data source) se znovu nacist neda
+		$this->exportRenderedItems($items, $export);
+	}
+
+	/**
+	 * Export pres vyrenderovane radky: skutecnymi sloupci gridu vcetne rendereru, exporteru se
+	 * predaji jako raw rows (ulozi se primo do provozniho zaznamu, background uz nic
+	 * nedopocitava). Audit i doruceni beze zmeny.
+	 */
+	private function exportRenderedItems(iterable $items, Export $export): never
+	{
+		$rows = [];
+		foreach ($items as $_item) {
+			$rows[] = new Row($this, $_item, $this->primaryKey);
+		}
+		$excelDataModel = new ExcelDataModel($rows, $this->columns, $this->getTranslator());
+
+		$this->sendExport($export, $excelDataModel->getSimpleData(false), $excelDataModel->getHeader());
+	}
+
+	private function sendExport(Export $export, mixed $source, array $columns): never
+	{
+		// audit + doruceni resi adt/exporter (ExportLog vznika VZDY;
+		// nad syncRowLimit background + e-mail). Filtry se nepredavaji
+		// - audit si je vezme z DQL query objektu, ktera skutecne bezi
+		$exportRecord = $this->exporter->export(new ExportRequest(
+			identifier: $this->gridName,
+			// nazev sekce = nazev sheetu = zaklad nazvu souboru: uzivatel
+			// stahne product_....xlsx a najde v nem list "product"
+			sections: new ExportSection(GeneratorHelper::baseName($this->gridName), $source, $columns),
+			generator: $export instanceof \Contributte\Datagrid\Export\ExportCsv && !$export instanceof \ADT\Datagrid\Model\Export\Excel\ExportExcel
+				? $this->csvExportGenerator
+				: $this->excelExportGenerator,
+			email: $this->email,
+		));
+
+		if ($exportRecord->isInBackground()) {
+			$this->getPresenter()->flashMessageInfo('Export will be processed in background and sent to your email when finished.');
+			$this->redirect('this');
+		}
+
+		$this->getPresenter()->sendResponse(new FileResponse($this->exporter->getFilePath($exportRecord), $exportRecord->getFileName()));
 	}
 
 	/**
