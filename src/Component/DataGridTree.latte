@@ -56,7 +56,7 @@
 							{php $column = $row->applyColumnCallback($key, clone $column)}
 
 							{if $column->hasTemplate()}
-								{include $column->getTemplate(), item => $item, (expand) $column->getTemplateVariables()}
+								{include $column->getTemplate(), (expand) array_merge(['item' => $item], $column->getTemplateVariables())}
 							{else}
 								{ifset #$col}
 									{include #$col, item => $item}
@@ -82,7 +82,7 @@
 									{php $column = $row->applyColumnCallback($key, clone $column)}
 
 									{if $column->hasTemplate()}
-										{include $column->getTemplate(), row => $row, item => $item, (expand) $column->getTemplateVariables()}
+										{include $column->getTemplate(), (expand) array_merge(['row' => $row, 'item' => $item], $column->getTemplateVariables())}
 									{else}
 										{ifset #$col}
 											{include #$col, item => $item}
@@ -102,7 +102,7 @@
 								{foreach $actions as $key => $action}
 									{if $row->hasAction($key)}
 										{if $action->hasTemplate()}
-											{include $action->getTemplate(), item => $item, (expand) $action->getTemplateVariables(), row => $row}
+											{include $action->getTemplate(), (expand) array_merge(['item' => $item], $action->getTemplateVariables(), ['row' => $row])}
 										{else}
 											{$action->render($row)|noescape}
 										{/if}
