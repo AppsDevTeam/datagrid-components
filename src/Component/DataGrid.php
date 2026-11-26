@@ -322,6 +322,12 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 
 		$export = $this->exports[$id];
 
+		// Export s vlastním callbackem (addExportCallback) si data zpracuje sám, exporter by callback obešel
+		if (!$export instanceof ExportExcel && !$export instanceof \Contributte\Datagrid\Export\ExportCsv) {
+			parent::handleExport($id);
+			return;
+		}
+
 		ini_set('memory_limit', '1G');
 
 		$dataSource = $this->dataModel->getDataSource();
