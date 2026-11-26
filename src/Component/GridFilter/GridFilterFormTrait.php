@@ -7,6 +7,7 @@ use ADT\Datagrid\Component\DataGrid;
 use ADT\Datagrid\Model\Entities\GridFilter;
 use ADT\Datagrid\Model\Queries\GridFilterQuery;
 use ADT\DoctrineComponents\EntityManager;
+use ADT\Forms\DynamicContainer;
 use ADT\Forms\StaticContainer;
 use ADT\Utils\Utils;
 use Exception;
@@ -143,7 +144,11 @@ trait GridFilterFormTrait
 			unset ($columnItems['isActive']);
 			$container->addSelect('label', '', $columnItems)
 				->setRequired()
-				->setPrompt('---');
+				->setPrompt('---')
+				// Ulozeny filtr nebo odkaz muze obsahovat sloupec, ktery dialog nenabizi (filtr odebrany
+				// z gridu, prepinac vyrazeny z dialogu). Nacteni na nem nesmi spadnout, radek se pak
+				// pred vykreslenim zahodi - viz removeConditionsNotOffered().
+				->checkDefaultValue(false);
 
 			if ($gridFilter) {
 				$form->mapToForm();
@@ -328,6 +333,41 @@ trait GridFilterFormTrait
 
 		if (!$gridFilter) {
 			$form->setDefaults($defaults);
+		}
+
+		$form->onRender[] = fn () => $this->removeConditionsNotOffered($form);
+	}
+
+	/**
+	 * Podminky na sloupce, ktere dialog nenabizi, se do nej nevykresli - nejdou v nem zobrazit
+	 * ani upravit. Po ulozeni filtru z nej tak zmizi.
+	 *
+	 * Az pred vykreslenim, ne pri mapovani: radky dynamickeho kontejneru vznikaji lene a kazdy
+	 * pri vzniku mapuje formular znovu, takze odebrany radek by se hned zase zalozil. Ze stejneho
+	 * duvodu se posledni radek neodebira (novy prazdny by ho pri vzniku vratil), jen se vyprazdni.
+	 * Odeslany formular uz takove radky neobsahuje a prazdny vyber sloupce u noveho radku je tam
+	 * platny stav.
+	 */
+	protected function removeConditionsNotOffered(Form $form): void
+	{
+		if ($form->isSubmitted()) {
+			return;
+		}
+
+		/** @var DynamicContainer $conditions */
+		$conditions = $form['value'];
+
+		$notOffered = array_filter(
+			$conditions->getContainers(),
+			fn (StaticContainer $condition) => $condition['label']->getRawValue() !== null && $condition['label']->getValue() === null,
+		);
+
+		if (count($notOffered) === $conditions->count()) {
+			array_shift($notOffered)['label']->setValue(null);
+		}
+
+		foreach ($notOffered as $_condition) {
+			$conditions->removeComponent($_condition);
 		}
 	}
 

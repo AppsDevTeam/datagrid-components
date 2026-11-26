@@ -554,10 +554,11 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	/**
 	 * @throws DataGridException
 	 */
-	public function addSwitcher(string $key, string $name, callable $callback, ?string $column = null, ?string $title = null, bool $defaultValue = true): FilterSwitcher
+	public function addSwitcher(string $key, string $name, callable $callback, ?string $column = null, ?string $title = null, bool $defaultValue = true, bool $inAdvancedFilter = true): FilterSwitcher
 	{
 		$postRequest = $this->getPresenter()->getRequest()->getPost('filter');
 		$switcher = $this->addFilterSwitcher($key, $name, $column)
+			->setInAdvancedFilter($inAdvancedFilter)
 			->setValue($defaultValue)
 			->setCondition($callback);
 
@@ -914,7 +915,8 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		unset ($filters['advancedSearch']);
 		unset ($filters[static::SELECTED_GRID_FILTER_KEY]);
 
-		$filters = array_filter($filters, fn (Filter $filter) => !$filter instanceof FilterPeriod);
+		$filters = array_filter($filters, fn (Filter $filter) => !$filter instanceof FilterPeriod
+			&& !($filter instanceof FilterSwitcher && !$filter->isInAdvancedFilter()));
 
 		$fields = [];
 		foreach ($filters as $_filter) {
