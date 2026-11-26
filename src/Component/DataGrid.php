@@ -449,6 +449,21 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $this;
 	}
 
+	public function addFilterText(string $key, string $name, array|string|null $columns = null): \Contributte\Datagrid\Filter\FilterText
+	{
+		$columns = $columns === null ? [$key] : (is_string($columns) ? [$columns] : $columns);
+		$this->addFilterCheck($key);
+
+		return $this->filters[$key] = new \ADT\Datagrid\Filter\FilterText($this, $key, $name, $columns);
+	}
+
+	public function addFilterSelect(string $key, string $name, array $options, ?string $column = null): FilterSelect
+	{
+		$this->addFilterCheck($key);
+
+		return $this->filters[$key] = new \ADT\Datagrid\Filter\FilterSelect($this, $key, $name, $options, $column ?? $key);
+	}
+
 	public function addFilterMultiSelect(
 		string $key,
 		string $name,
