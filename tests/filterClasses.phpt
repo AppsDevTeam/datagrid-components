@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use ADT\Datagrid\Component\DataGrid;
+use ADT\Datagrid\Filter\FilterCheckbox;
 use ADT\Datagrid\Filter\FilterSelect;
 use ADT\Datagrid\Filter\FilterText;
 use Tester\Assert;
@@ -22,4 +23,11 @@ test('select filter options can be replaced', function () {
 
 	Assert::type(FilterSelect::class, $filter);
 	Assert::same([1 => 'yes'], $filter->setOptions([1 => 'yes'])->getOptions());
+});
+
+test('checkbox filter can be added', function () {
+	$grid = new DataGrid();
+
+	Assert::type(FilterCheckbox::class, $grid->addFilterCheckbox('paid', 'paid'));
+	Assert::same('paid', $grid->getFilter('paid')->getKey());
 });

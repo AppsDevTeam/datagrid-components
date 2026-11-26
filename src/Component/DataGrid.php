@@ -449,6 +449,29 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		return $this;
 	}
 
+	public function addFilterCheckbox(string $key, string $name, ?string $column = null): \ADT\Datagrid\Filter\FilterCheckbox
+	{
+		$this->addFilterCheck($key);
+
+		return $this->filters[$key] = new \ADT\Datagrid\Filter\FilterCheckbox($this, $key, $name, $column ?? $key);
+	}
+
+	/**
+	 * Skryté sloupce si grid pamatuje v session, kterou knihovna zakládá při připojení k presenteru. BaseGrid ale
+	 * grid nastavuje v initGrid() až po připojení, proto se session doplní tady.
+	 */
+	public function setColumnsHideable(bool $columnsHideable = true): self
+	{
+		parent::setColumnsHideable($columnsHideable);
+
+		$presenter = $this->getPresenterIfExists();
+		if ($columnsHideable && $presenter && !isset($this->gridSession)) {
+			$this->gridSession = $presenter->getSession($this->getSessionSectionName());
+		}
+
+		return $this;
+	}
+
 	public function addFilterText(string $key, string $name, array|string|null $columns = null): \Contributte\Datagrid\Filter\FilterText
 	{
 		$columns = $columns === null ? [$key] : (is_string($columns) ? [$columns] : $columns);
