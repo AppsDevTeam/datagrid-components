@@ -17,6 +17,7 @@ use ADT\DoctrineComponents\EntityManager;
 use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
+use ADT\DoctrineComponents\QueryObject\QueryObjectInterface;
 use ADT\Forms\BootstrapFormRenderer;
 use ADT\Datagrid\Filter\FilterPeriod;
 use ADT\Datagrid\Filter\FilterSwitcher;
@@ -304,6 +305,25 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	}
 
 	/**
+	 * Query object s filtry, hledáním a řazením gridu bez načtení řádků - export na pozadí si z něj vezme ID
+	 * (adt/exporter, ExportSection).
+	 *
+	 * @throws DataGridException
+	 */
+	public function getFilteredQueryObject(): QueryObjectInterface
+	{
+		$dataSource = $this->dataModel?->getDataSource();
+		if (!$dataSource instanceof QueryObjectDataSource) {
+			throw new DataGridException('Grid nemá zdroj dat nad query objektem.');
+		}
+
+		$dataSource->filter($this->assembleFilters());
+		$dataSource->sort($this->createSorting($this->sort, $this->sortCallback));
+
+		return $dataSource->getQueryObject();
+	}
+
+	/**
 	 * @throws DataGridException
 	 */
 	public function handleExport($id): void
@@ -321,6 +341,12 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		}
 
 		$export = $this->exports[$id];
+
+		// Export s vlastním callbackem (addExportCallback) si data zpracuje sám, exporter by callback obešel
+		if (!$export instanceof ExportExcel && !$export instanceof \Contributte\Datagrid\Export\ExportCsv) {
+			parent::handleExport($id);
+			return;
+		}
 
 		ini_set('memory_limit', '1G');
 
@@ -441,6 +467,44 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 	{
 		$this->showTableFoot = $bool;
 		return $this;
+	}
+
+	public function addFilterCheckbox(string $key, string $name, ?string $column = null): \ADT\Datagrid\Filter\FilterCheckbox
+	{
+		$this->addFilterCheck($key);
+
+		return $this->filters[$key] = new \ADT\Datagrid\Filter\FilterCheckbox($this, $key, $name, $column ?? $key);
+	}
+
+	/**
+	 * Skryté sloupce si grid pamatuje v session, kterou knihovna zakládá při připojení k presenteru. BaseGrid ale
+	 * grid nastavuje v initGrid() až po připojení, proto se session doplní tady.
+	 */
+	public function setColumnsHideable(bool $columnsHideable = true): self
+	{
+		parent::setColumnsHideable($columnsHideable);
+
+		$presenter = $this->getPresenterIfExists();
+		if ($columnsHideable && $presenter && !isset($this->gridSession)) {
+			$this->gridSession = $presenter->getSession($this->getSessionSectionName());
+		}
+
+		return $this;
+	}
+
+	public function addFilterText(string $key, string $name, array|string|null $columns = null): \Contributte\Datagrid\Filter\FilterText
+	{
+		$columns = $columns === null ? [$key] : (is_string($columns) ? [$columns] : $columns);
+		$this->addFilterCheck($key);
+
+		return $this->filters[$key] = new \ADT\Datagrid\Filter\FilterText($this, $key, $name, $columns);
+	}
+
+	public function addFilterSelect(string $key, string $name, array $options, ?string $column = null): FilterSelect
+	{
+		$this->addFilterCheck($key);
+
+		return $this->filters[$key] = new \ADT\Datagrid\Filter\FilterSelect($this, $key, $name, $options, $column ?? $key);
 	}
 
 	public function addFilterMultiSelect(
