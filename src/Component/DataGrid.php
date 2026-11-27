@@ -17,6 +17,7 @@ use ADT\DoctrineComponents\EntityManager;
 use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
+use ADT\DoctrineComponents\QueryObject\QueryObjectInterface;
 use ADT\Forms\BootstrapFormRenderer;
 use ADT\Datagrid\Filter\FilterPeriod;
 use ADT\Datagrid\Filter\FilterSwitcher;
@@ -301,6 +302,25 @@ class DataGrid extends \Contributte\Datagrid\Datagrid
 		}
 
 		return true;
+	}
+
+	/**
+	 * Query object s filtry, hledáním a řazením gridu bez načtení řádků - export na pozadí si z něj vezme ID
+	 * (adt/exporter, ExportSection).
+	 *
+	 * @throws DataGridException
+	 */
+	public function getFilteredQueryObject(): QueryObjectInterface
+	{
+		$dataSource = $this->dataModel?->getDataSource();
+		if (!$dataSource instanceof QueryObjectDataSource) {
+			throw new DataGridException('Grid nemá zdroj dat nad query objektem.');
+		}
+
+		$dataSource->filter($this->assembleFilters());
+		$dataSource->sort($this->createSorting($this->sort, $this->sortCallback));
+
+		return $dataSource->getQueryObject();
 	}
 
 	/**
